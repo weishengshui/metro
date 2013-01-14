@@ -1,0 +1,9 @@
+.classpath
+.cvsignore
+.project
+.settings
+CVS
+*.*.CVS
+brand
+merchandise
+target
