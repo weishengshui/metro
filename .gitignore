@@ -3,7 +3,6 @@
 .project
 .settings
 CVS
-*.*.CVS
-brand
-merchandise
-target
+brand/
+merchandise/
+target/
