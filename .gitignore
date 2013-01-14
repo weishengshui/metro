@@ -1,8 +1,10 @@
-.classpath
-.cvsignore
-.project
-.settings
+/.classpath
+/.cvsignore
+/.project
+/.settings/
 CVS
-brand/
-merchandise/
-target/
+/brand/
+/merchandise/
+/target/
+/com/
+
