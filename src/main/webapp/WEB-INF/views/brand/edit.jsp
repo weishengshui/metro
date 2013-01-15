@@ -25,6 +25,24 @@
 <script type="text/javascript">
 		var baseURL = '<%=request.getContextPath()%>';
 		
+		function show(url,width,height){
+			parent.parent.dialog("预览图片",url,width,height);
+		}
+		
+		$(function(){
+			style="display:none";
+	    	document.getElementById('divPreview').style.display = "none";
+	    	var logo = $.toJSON(${logo});
+	    	alert(logo);
+			var logo = eval('('+logo+')');
+			if(logo){
+				$('#aimage1').attr('href','javascript:show(\'brand/imageShow?path=BRAND_IMAGE_DIR&contentType='+logo.mimeType+'&fileName='+logo.url+'\',\''+logo.width+'\',\''+logo.height+'\')');
+				$('#image1').attr('src','showGetthumbPic?path=BRAND_IMAGE_DIR&contentType='+logo.mimeType+'&fileName='+logo.url);
+				style="display:none";
+		    	document.getElementById('divPreview').style.display = "";
+			}
+		});
+		
 	function doSubmit(){
 		$('#fm').form('submit',{
 			success:function(result){
@@ -33,14 +51,22 @@
 		}); 
 	}
 	
-	function doSearch(){  
-	    $('#tt2').datagrid('load',{ 
-	    	brandId: $('#_id').val(),
-	    	memberName:$('#memberName').val(),  
-	    	cardNumber:$('#cardNumber').val(),
-	    	joinedStart:$('#joinedStart').datebox('getValue'),
-	    	joinedEnd:$('#joinedEnd').datebox('getValue'),
-	    });  
+	function uploadImage(){
+		if($('#logo2').val()==""){
+			alert("请先添加图片");
+			return ;
+		}
+		$('#fm2').form('submit',{
+			success:function(result){
+				result = eval('('+result+')');
+				$('#imageSessionName_dataForm').val(result.imageSessionName);
+				$('#imageSessionName_imageForm').val(result.imageSessionName);
+				$('#aimage1').attr('href','javascript:show(\'brand/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
+				$('#image1').attr('src','showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
+				style="display:none";
+		    	document.getElementById('divPreview').style.display = "";
+			}
+		}); 
 	}
 	
 	function exportUnionMember(){
@@ -61,50 +87,23 @@
 		$('#dd').dialog('center');
 		$('#dd').dialog('open');
 	}
-	function previewImage(imageId){
-    	
-		if($('#'+imageId).val()==''){
-			alert("请先添加图片");
+	function deleteImage(){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
+		if($('#imageSessionName_imageForm').val() == ""){
+			alert("请先上传图片");
 			return;
 		}
-		var width, height;
-		width = '346px';
-		height = '346px';
-		var input = document.getElementById(imageId);
-		var imgPre = document.getElementById('perviewImage');
-		if($.browser.msie){
-			input.select();
-			var url = document.selection.createRange().text;
-			var imgDiv = document.createElement("div");
-			imgDiv.setAttribute("id",imgPre.id);
-			var parent = imgPre.parentNode;
-			parent.appendChild(imgDiv);
-			parent.removeChild(imgPre);
-		    imgDiv.style.width = width;    
-			imgDiv.style.height = height;
-		    imgDiv.style.filter="progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod = scale)";   
-		    imgDiv.filters.item("DXImageTransform.Microsoft.AlphaImageLoader").src = url;
-		}else {
-			if (input.files && input.files[0]) {
-	        	var reader = new FileReader();
-	            reader.onload = function (e) {
-	                    $('#perviewImage').attr('src', e.target.result);
-	                    $('#perviewImage').attr('width', width);
-	                    $('#perviewImage').attr('height', height);
-	                };
-	                reader.readAsDataURL(input.files[0]);
-	        } 
-		}
-		$('#imageDia').resizable({  
-		    maxWidth:20,  
-		    maxHeight:100  
-		}); 
-		$('#imageDia').dialog('center');
-		$('#imageDia').dialog('open');
-	}
-	function deleteImage(name, id, spanId){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
-		//$('#'+imageId).val('');
-		$('#'+spanId).html("<input type=file name="+name+" id="+id+" accept=image/* onchange=check(this,'"+spanId+"') />");
+		$.ajax({
+			url:'deleteImage',
+			data:'imageSessionName='+$('#imageSessionName_imageForm').val(),
+			dataType:'json',
+			async:false,
+			success:function(data){
+				
+			}
+		});
+		style="display:none";
+    	document.getElementById('divPreview').style.display = "none";
+		//$('#span1').html("<input type=file name=logo2 id=logo2 accept=image/* onchange=check(this,'span1') />");
 	}
 </script>
 
@@ -125,6 +124,7 @@
 											<td width="80px">品牌名称：</td>
 											<td width="200px" align="left">
 												<input type="hidden" name="id" id="_id" value="${brand.id }">
+												<input type="hidden" name="imageSessionName" id="imageSessionName_dataForm" value="${imageSessionName }">
 												<input id="name" name="name" value="${brand.name }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" /> 
 											</td>
 											<td></td>
@@ -170,16 +170,6 @@
 											<td></td>
 										</tr>
 										<tr>
-											<td width="20px"></td>
-											<td width="80px">图片：</td>
-											<td width="200px" align="left">
-												<span id="span1">
-													<input type="file" name="logo2" id="logo" accept="image/*" onchange="check(this,'span1')">
-												</span>
-											</td>
-											<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="previewImage('logo')">预览</button> </td>
-										</tr>
-										<tr>
 											<td></td><td colspan="2">
 												<c:choose>
 													<c:when test="${(! empty brand) && brand.unionInvited==true }">
@@ -207,6 +197,31 @@
 			        </div>
 			</div> 
        </div>  
+       <div title="图片维护" style="padding:20px;">
+		    <form action="imageUpload" id="fm2" method="post" enctype="multipart/form-data">
+		    	<table>
+			    	<tr>
+						<td width="20px"></td>
+						<td width="80px">图片：</td>
+						<td>
+							<input type="hidden" id="imageUrl" name="imageUrl"/>
+							<input type="hidden" name="imageSessionName" id="imageSessionName_imageForm" value="${imageSessionName }">
+							<div id="divPreview" >
+<!-- 								<img id="imgHeadPhoto" src=""/> -->
+								<a id="aimage1" href="javascript:show('line/shopPicShow?path=${path }&fileName=${file.url }',250,270)"><img id="image1" src=""></a>
+							</div>
+						</td>
+						<td width="200px" align="left">
+							<span id="span1">
+								<input type="file" name="logo2" id="logo2" accept="image/*" onchange="check(this,'span1')">
+							</span>
+						</td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage()">上传</button></td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage()">删除</button></td>
+					</tr>
+			    </table>
+		    </form>
+	    </div>
        <div title="联合会员" style="padding:20px;">
 			<table border="0">
 				<tr>

@@ -59,8 +59,8 @@ INSERT INTO `Resources` VALUES ('24', '商品维护', null, '20', 'merchandise/l
 INSERT INTO `Resources` VALUES ('25', '商品类别与商品维护', null, '20', 'merchandise/merCate');
 INSERT INTO `Resources` VALUES ('26', '积分信息及规则管理', null, '0', null);
 INSERT INTO `Resources` VALUES ('27', '积分管理', null, '26', null);
-INSERT INTO `Resources` VALUES ('28', '积分基本信息维护', null, '27', null);
-INSERT INTO `Resources` VALUES ('29', '积分信息历史', null, '27', null);
+INSERT INTO `Resources` VALUES ('28', '积分基本信息维护', null, '27', 'integralManagement/show');
+INSERT INTO `Resources` VALUES ('29', '积分信息历史', null, '27', 'integralManagement/unitLedger');
 INSERT INTO `Resources` VALUES ('30', '积分失效管理', null, '26', null);
 INSERT INTO `Resources` VALUES ('31', '失效积分统计', null, '30', null);
 INSERT INTO `Resources` VALUES ('32', '失效积分历史', null, '30', null);

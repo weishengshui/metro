@@ -36,6 +36,9 @@ public class FileItem implements Serializable {
 
 	private long filesize;
 
+	private int width;
+	private int height;
+
 	private String url;
 
 	@Column(length = 4000)
@@ -135,6 +138,22 @@ public class FileItem implements Serializable {
 		this.filesize = filesize;
 	}
 
+	public int getWidth() {
+		return width;
+	}
+
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public void setHeight(int height) {
+		this.height = height;
+	}
+
 	/**
 	 * Returns the date and time this record is created. This record never
 	 * returns <code>null</code>.
@@ -192,7 +211,6 @@ public class FileItem implements Serializable {
 		this.description = description;
 	}
 
-	
 	public Integer getCreatedBy() {
 		return createdBy;
 	}

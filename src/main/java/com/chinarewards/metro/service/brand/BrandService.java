@@ -54,11 +54,6 @@ public class BrandService implements IBrandService {
 	public Brand createBrand(Brand brand, FileItem logo) {
 
 		if (null != logo) {
-			logo.setCreatedAt(SystemTimeProvider.getCurrentTime());
-			logo.setCreatedBy(UserContext.getUserId());
-			logo.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-			logo.setLastModifiedBy(UserContext.getUserId());
-
 			hbDaoSupport.save(logo);
 		}
 
@@ -77,13 +72,11 @@ public class BrandService implements IBrandService {
 		// TODO
 		Brand brandFromDb = hbDaoSupport.findTById(Brand.class, brand.getId());
 		FileItem oldLogo = brandFromDb.getLogo();
-		if (null != logo) {
-			logo.setCreatedAt(SystemTimeProvider.getCurrentTime());
-			logo.setCreatedBy(UserContext.getUserId());
-			logo.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-			logo.setLastModifiedBy(UserContext.getUserId());
+		if (null != logo && null == logo.getId()) {
 			hbDaoSupport.save(logo);
 			brandFromDb.setLogo(logo);
+		}else{
+			brandFromDb.setLogo(null);// delete, no file
 		}
 		brandFromDb.setCompanyName(brand.getCompanyName());
 		brandFromDb.setCompanyWebSite(brand.getCompanyWebSite());
@@ -96,7 +89,8 @@ public class BrandService implements IBrandService {
 		brandFromDb.setUnionInvited(brand.getUnionInvited());
 		hbDaoSupport.update(brandFromDb);
 
-		if (null != oldLogo && null != logo) {// delete old file
+		if (null != oldLogo && null != logo && !oldLogo.getId().equals(logo.getId())) {// delete old file
+			(new File(Constants.BRAND_IMAGE_DIR, oldLogo.getUrl())).delete(); //物理删除文件
 			hbDaoSupport.delete(oldLogo);
 		}
 

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ page import="com.chinarewards.metro.domain.activity.Token" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -22,7 +23,7 @@
 			return rowData.activityId;
 		}
 		function getId(){
-			return $("#id").val();
+			return $("#actId").val();
 		}
 	$(document).ready(function(){
 
@@ -43,35 +44,33 @@
 				alert("请选择结束时间！");
 				return false ;
 			}
+			
+			
 			$('#activityForm').form('submit', {
 			    url:'saveActivity',  
 			    success:function(data){
-
-		    		if(data == 300){
-		    			alert('不能重复保存！');
-		    		}else{
-			    		$("#id").val(data);
-			    		$('#table1').datagrid({
-			    			queryParams: {
-			    				id: data
-			    			}
-			    		});
-			    		$('#table2').datagrid({
-			    			queryParams: {
-			    				id: data
-			    			}
-			    		});
-			    		$('#table3').datagrid({
-			    			queryParams: {
-			    				id: data
-			    			}
-			    		});
-			    		/* $('#tabAct').tabs('disableTab', 0);
-			    		$('#tabAct').tabs('enableTab', 1);*/
-			    		alert('保存成功');
-			    		$('#activityForm')[0].reset();
-			    		//$('#tabAct').tabs('select', 1);
-		    		}
+		    		$("#id").val(data);
+			    	$("#actId").val(data);
+		    		$('#table1').datagrid({
+		    			queryParams: {
+		    				id: data
+		    			}
+		    		});
+		    		$('#table2').datagrid({
+		    			queryParams: {
+		    				id: data
+		    			}
+		    		});
+		    		$('#table3').datagrid({
+		    			queryParams: {
+		    				id: data
+		    			}
+		    		});
+		    		/* $('#tabAct').tabs('disableTab', 0);
+		    		$('#tabAct').tabs('enableTab', 1);*/
+		    		alert('保存成功');
+		    		//$('#activityForm')[0].reset();
+		    		//$('#tabAct').tabs('select', 1);
 			    },
 			    error:function(data){
 			    	//alert('保存失败');
@@ -305,7 +304,12 @@
 </script>
 </head>
 <body>
-<input type="hidden" value="" name="id" id="id" />
+        <%
+		   Token t=Token.getInstance();
+		   String token=t.getToken(request);
+		%>
+		<input type="hidden" value="" name="actId" id="actId" />
+
 	<div id="tabAct" class="easyui-tabs" style="width:650px;height:550px">  
         <div title="活动信息新增" style="padding:10px">  
             <form id="activityForm" method="post" enctype="multipart/form-data">
@@ -313,6 +317,8 @@
 			<legend style="color: blue;">活动基本信息</legend>
 		     <table style="width: 600px;" >
 		        	<tr>
+		        	<input type="hidden" value="" name="id" id="id" />
+		        	<input type="hidden" name="goasin" value="<%=token %>"/>
 		        		<td><span style="font-weight: bolder;color: red;">*</span>活动名称：</td>
 		        		<td><input id="activityName" class="easyui-validatebox" data-options="required:true" name="activityName" type="text" style="width: 211px;"/></td>
 		        		<td rowspan="8" colspan="2" >
