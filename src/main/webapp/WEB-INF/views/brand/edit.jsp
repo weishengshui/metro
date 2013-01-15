@@ -33,7 +33,7 @@
 			style="display:none";
 	    	document.getElementById('divPreview').style.display = "none";
 	    	var logo = $.toJSON(${logo});
-	    	alert(logo);
+	    	//alert(logo);
 			var logo = eval('('+logo+')');
 			if(logo){
 				$('#aimage1').attr('href','javascript:show(\'brand/imageShow?path=BRAND_IMAGE_DIR&contentType='+logo.mimeType+'&fileName='+logo.url+'\',\''+logo.width+'\',\''+logo.height+'\')');
@@ -80,7 +80,7 @@
 		filepath = filepath.toLocaleLowerCase();
 		if(filepath != 'jpg' && filepath != 'gif' && filepath!='jpeg' && filepath !='bmp' && filepath!='png'){
 			alert("只能上传JPG, GIF, JPEG, BMP, PNG 格式的图片");
-			deleteImage(path.name, path.id, spanId);
+			deleteInputFile(path.name, path.id, spanId);
 		}
 	}
 	function openDialog(){
@@ -103,7 +103,10 @@
 		});
 		style="display:none";
     	document.getElementById('divPreview').style.display = "none";
-		//$('#span1').html("<input type=file name=logo2 id=logo2 accept=image/* onchange=check(this,'span1') />");
+	}
+	
+	function deleteInputFile(name, id, spanId){
+		$('#'+spanId).html("<input type=file name="+ name +" id=logo2"+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
 	}
 </script>
 

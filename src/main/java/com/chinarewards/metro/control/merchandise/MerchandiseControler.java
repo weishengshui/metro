@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -21,16 +22,21 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.chinarewards.metro.core.common.CommonUtil;
 import com.chinarewards.metro.core.common.Constants;
+import com.chinarewards.metro.core.common.FileUtil;
 import com.chinarewards.metro.core.common.Page;
+import com.chinarewards.metro.core.common.SystemTimeProvider;
 import com.chinarewards.metro.core.common.UUIDUtil;
+import com.chinarewards.metro.core.common.UserContext;
 import com.chinarewards.metro.core.service.IFileItemService;
 import com.chinarewards.metro.domain.category.Category;
+import com.chinarewards.metro.domain.file.FileItem;
 import com.chinarewards.metro.domain.merchandise.CatalogVo;
 import com.chinarewards.metro.domain.merchandise.CategoryVo;
 import com.chinarewards.metro.domain.merchandise.Merchandise;
@@ -39,6 +45,7 @@ import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
 import com.chinarewards.metro.domain.merchandise.MerchandiseImageType;
 import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
 import com.chinarewards.metro.model.common.AjaxResponseCommonVo;
+import com.chinarewards.metro.model.common.ImageInfo;
 import com.chinarewards.metro.model.common.SelectVO;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
 import com.chinarewards.metro.service.merchandise.IMerchandiseService;
@@ -596,5 +603,77 @@ public class MerchandiseControler {
 			return "{msg:" + false + "}";
 		}
 	}
+	
+	/**
+	 * 将上传文件保存至临时文件夹
+	 */
+	@RequestMapping(value = "/imageUpload", method = RequestMethod.POST)
+	@ResponseBody
+	public void imageUpload(MultipartFile mFile,
+			HttpSession session, String imageSessionName,
+			HttpServletResponse response) {
 
+		FileUtil.pathExist(Constants.MERCHANDISE_IMAGE_BUFFER);
+		PrintWriter out = null;
+		if (null == imageSessionName || imageSessionName.isEmpty()) {
+			imageSessionName = UUIDUtil.generate();
+		}
+		try {
+			response.setContentType("text/html; charset=utf-8");
+			out = response.getWriter();
+			String fileName = mFile.getOriginalFilename();
+			String suffix = getSuffix(fileName);
+			String fileNewName = Constants.UPLOAD_TEMP_UID_PREFIX
+					+ UUIDUtil.generate() + suffix;
+			FileUtil.saveFile(mFile.getInputStream(),
+					Constants.BRAND_IMAGE_BUFFER, fileNewName);
+			FileItem logo = (FileItem) session.getAttribute(imageSessionName);
+			if (null != logo) {// 删除之前的遗留图片
+				if (logo.getUrl().startsWith(Constants.UPLOAD_TEMP_UID_PREFIX)) {
+					File file = new File(Constants.BRAND_IMAGE_BUFFER,
+							logo.getUrl());
+					file.delete();
+				}
+			}
+
+			logo = new FileItem();
+			System.out.println("logo is " + logo);
+			ImageInfo imageInfo = FileUtil.getImageInfo(
+					Constants.BRAND_IMAGE_BUFFER, fileNewName);
+			logo.setWidth(imageInfo.getWidth());
+			logo.setHeight(imageInfo.getHeight());
+			logo.setCreatedAt(SystemTimeProvider.getCurrentTime());
+			logo.setCreatedBy(UserContext.getUserId());
+			logo.setFilesize(mFile.getSize());
+			logo.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+			logo.setLastModifiedBy(UserContext.getUserId());
+			logo.setMimeType(mFile.getContentType());
+			logo.setOriginalFilename(fileName);
+			logo.setUrl(fileNewName);
+
+			session.setAttribute(imageSessionName, logo);
+
+			out.write("{url:\'" + logo.getUrl() + "\',width:\'"
+					+ logo.getWidth() + "\',height:\'" + logo.getHeight()
+					+ "\',imageSessionName:\'" + imageSessionName
+					+ "\',contentType:\'" + logo.getMimeType() + "\'}");
+			out.flush();
+		} catch (FileNotFoundException e) {
+			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+					+ e.getMessage())));
+			out.flush();
+			e.printStackTrace();
+		} catch (IOException e) {
+			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+					+ e.getMessage())));
+			out.flush();
+			e.printStackTrace();
+		} catch (Exception e) {
+			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+					+ e.getMessage())));
+			out.flush();
+			e.printStackTrace();
+		}
+	}
+	
 }
