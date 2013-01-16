@@ -69,17 +69,17 @@
     </listener>
     
     <!-- AppInfoServer for displaying application version, name... -->
-	<servlet>
-		<servlet-name>appinfo</servlet-name>
-		<servlet-class>com.chinarewards.common.web.appinfo.AppInfoServlet</servlet-class>
-		<load-on-startup>1</load-on-startup>
-	</servlet>
+<!-- 	<servlet> -->
+<!-- 		<servlet-name>appinfo</servlet-name> -->
+<!-- 		<servlet-class>com.chinarewards.common.web.appinfo.AppInfoServlet</servlet-class> -->
+<!-- 		<load-on-startup>1</load-on-startup> -->
+<!-- 	</servlet> -->
 	
 	<!-- AppInfo -->
-	<servlet-mapping>
-		<servlet-name>appinfo</servlet-name>
-		<url-pattern>/appinfo.html</url-pattern>
-	</servlet-mapping>
+<!-- 	<servlet-mapping> -->
+<!-- 		<servlet-name>appinfo</servlet-name> -->
+<!-- 		<url-pattern>/appinfo.html</url-pattern> -->
+<!-- 	</servlet-mapping> -->
 	
      <servlet>
         <servlet-name>spring</servlet-name>

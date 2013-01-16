@@ -50,8 +50,7 @@
 		filepath = filepath.toLocaleLowerCase();
 		if(filepath != 'jpg' && filepath != 'gif' && filepath!='jpeg' && filepath !='bmp' && filepath!='png'){
 			alert("只能上传JPG, GIF, JPEG, BMP, PNG 格式的图片");
-			deleteImage(path.name, path.id, spanId);
-		}else{
+			deleteInputFile(path.name, path.id, spanId);
 		}
 	}
 	function openDialog(){
@@ -106,12 +105,15 @@
     	document.getElementById('divPreview').style.display = "none";
 		//$('#span1').html("<input type=file name=logo2 id=logo2 accept=image/* onchange=check(this,'span1') />");
 	}
+	function deleteInputFile(name, id, spanId){
+		$('#'+spanId).html("<input type=file name="+ name +" id=logo2"+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
+	}
 </script>
 
 </head>
 <body>
 	<div class="easyui-tabs" style="">
-	    <div title="品牌信息新增" style="padding:20px;">
+	    <div title="品牌基本信息" style="padding:20px;">
 	    	<form action="create" method="post" id="fm"> 
 				<table border="0">
 					<tr>

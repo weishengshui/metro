@@ -46,10 +46,10 @@
 	
 	function doSubmit(){
 		$('#description2').val(editor.getContent());
-		if($('#overview').val()==''){
+		/* if($('#overview').val()==''){
 			alert("请选择基本图片");
 			return;
-		}
+		} */
 		$('#rmbPrice').validatebox({required: false});
 		$('#binkePrice').validatebox({required: false});
 		
@@ -75,13 +75,15 @@
 	            return $(this).form('validate');  
 	        }, 
 			success: function(result){
-				if(eval('('+result+')').categoryId){
+				result = eval('('+result+')'); 
+				if(result.categoryId){
 					var node = $('#tt2').tree('find',eval('('+result+')').categoryId);
 					var fullParent = getFullCategory(node);
 					alert('\"'+fullParent+'\"类别中已存在该排序值');
 					return;
 				}
-				alert(eval('('+result+')').msg);
+				$('#_id').val(result.id);
+				alert(result.msg);
 			},
 			error:function(result){
 				alert('error');
@@ -95,7 +97,7 @@
 		filepath = filepath.toLocaleLowerCase();
 		if(filepath != 'jpg' && filepath != 'gif' && filepath!='jpeg' && filepath !='bmp' && filepath!='png'){
 			alert("只能上传JPG, GIF, JPEG, BMP, PNG 格式的图片");
-			deleteImage(path.name, path.id, spanId);
+			deleteInputFile(path.name, path.id, spanId);
 		}
 	}
 	function openDialog(){
@@ -217,211 +219,344 @@
 			return str;
 		}
 	}
+	function deleteInputFile(name, id, spanId){
+		$('#'+spanId).html("<input type=file name="+ name +" id=logo2"+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
+	}
+	function uploadImage(formId,imageId,aimageId,imagePreId,divPreviewId){
+		if($('#'+imageId).val()==""){
+			alert("请先添加图片");
+			return ;
+		}
+		$('#'+formId).form('submit',{
+			success:function(result){
+				result = eval('('+result+')');
+				initImageSession(result.imageSessionName);
+				$('#'+aimageId).attr('href','javascript:show(\'brand/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
+				$('#'+imagePreId).attr('src','showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
+				style="display:none";
+		    	document.getElementById(divPreviewId).style.display = "";
+			}
+		}); 
+	}
+	function deleteImage(imageId, divPreviewId){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
+		$.ajax({
+			url:'deleteImage',
+			data:'imageSessionName='+$('#imageSessionName_dataForm').val()+'&imageId='+imageId,
+			dataType:'json',
+			async:false,
+			success:function(data){
+				style="display:none";
+		    	document.getElementById(divPreviewId).style.display = "none";
+			}
+		});
+	}
+	function initImageSession(imageSessionName){
+		$('#imageSessionName_dataForm').val(imageSessionName);
+		$('#imageSessionName_overview').val(imageSessionName);
+		$('#imageSessionName_image1').val(imageSessionName);		
+		$('#imageSessionName_image2').val(imageSessionName);
+		$('#imageSessionName_image3').val(imageSessionName);
+		$('#imageSessionName_image4').val(imageSessionName);
+		$('#imageSessionName_image5').val(imageSessionName);
+		$('#imageSessionName_image6').val(imageSessionName);
+	}
 </script>
 
 </head>
 <body>
-	
-	<form action="create" method="post" id="fm" enctype="multipart/form-data"> 
-		<table border="0">
-			<tr>
-				<td width="1200px">
-					<fieldset style="font-size: 14px;width:1100px;height:auto;">
-						<legend style="color: blue;">商品信息</legend>
-							<table border="0">
-								<tr>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="120px">商品编号：</td>
-									<td width="200px" align="left">
-										<input id="code" name="code" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" /> 
+	<div class="easyui-tabs" style="">
+	    <div title="商品基本信息" style="padding:20px;">
+			<form action="create" method="post" id="fm" enctype="multipart/form-data"> 
+				<table border="0">
+					<tr>
+						<td width="1200px">
+							<fieldset style="font-size: 14px;width:1100px;height:auto;">
+								<legend style="color: blue;">商品信息</legend>
+									<table border="0">
+										<tr>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="120px">商品编号：</td>
+											<td width="200px" align="left">
+												<input type="hidden" name="id" id="_id" />
+												<input type="hidden" name="imageSessionName" id="imageSessionName_dataForm" />
+												<input id="code" name="code" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" /> 
+											</td>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="80px">商品名称：</td>
+											<td width="200px" align="left">
+												<input id="name" name="name" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"> 
+											</td>
+											<td></td>
+										</tr>
+										<tr>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="120px">型号：</td>
+											<td width="200px" align="left">
+												<input id="model" name="model" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"> 
+											</td>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="80px">采购价：</td>
+											<td width="200px" align="left">
+												<input type="hidden" name="parent.id" id="parentId"> 
+												<input id="purchasePrice" name="purchasePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2,required:true"> 
+											</td>
+											<td ></td>
+										</tr>
+										<tr>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="120px">商品介绍：</td>
+											<td align="left" colspan="5">
+		<!-- 										<div id="description" style="width:200px;"></div> -->
+												<textarea id="description" ></textarea>
+												<input type="hidden" name="description" id="description2">
+											</td>
+										</tr>
+									</table>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<td width="1200px">
+							<fieldset style="font-size: 14px;width:1100px;height:auto;">
+								<legend style="color: blue;">售卖形式</legend>
+								<table border="0">
+									<tr>
+										<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
+										<td width="80px">正常售卖：</td>
+										<td width="200px">
+												<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+										</td>
+									</tr>
+									<tr>
+										<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
+										<td width="80px">积分兑换：</td>
+										<td width="200px">
+												<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+										</td>
+									</tr>
+								</table>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<td width="1200px">
+							<fieldset style="font-size: 14px;width:1100px;height:auto;">
+								<legend style="color: blue;">商品类别选择</legend>
+								<table border="0">
+									<tr>
+										<td width="20px"></td>
+										<td><button type="button" onclick="openDialog()">选择类别</button></td>
+									</tr>
+									<tr>
+										<td width="20px"></td>
+										<td>
+											<div id="selectCategorys">
+													
+											</div>
+										</td>
+									</tr>
+								</table>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<td align="center"><button type="button" onclick="doSubmit()">保存</button></td>
+					</tr>
+				</table>
+			</form>
+	    </div>
+	    <div title="图片维护" style="padding:20px;">
+		    <table>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm0" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">基本图片：</td>
+									<td>
+										<input type="hidden" name="imageSessionName" id="imageSessionName_overview">
+										<div id="divPreview0" >
+											<a id="aimage0" href=""><img id="imagePre0" src=""></a>
+										</div>
 									</td>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="80px">商品名称：</td>
 									<td width="200px" align="left">
-										<input id="name" name="name" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"> 
+										<span id="span0">
+											<input type="file" name="overview" id="overview" accept="image/*" onchange="check(this,'span0')">
+										</span>
 									</td>
-									<td></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('fm0','overview','aimage0','imagePre0','divPreview0')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('overview', 'divPreview0')">删除</button></td>
 								</tr>
-								<tr>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="120px">型号：</td>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm1" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片一：</td>
+									<td>
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image1">
+										<div id="divPreview1" >
+											<a id="aimage1" href=""><img id="imagePre1" src=""></a>
+										</div>
+									</td>
 									<td width="200px" align="left">
-										<input id="model" name="model" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"> 
+										<span id="span1">
+											<input type="file" name="image1" id="image1" accept="image/*" onchange="check(this,'span1')">
+										</span>
 									</td>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="80px">采购价：</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('fm1','image1','aimage1','imagePre1','divPreview1')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('image1', 'divPreview1')">删除</button></td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm2" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片二：</td>
+									<td>
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image2">
+										<div id="divPreview2" >
+											<a id="aimage2" href=""><img id="imagePre2" src=""></a>
+										</div>
+									</td>
 									<td width="200px" align="left">
-										<input type="hidden" name="parent.id" id="parentId"> 
-										<input id="purchasePrice" name="purchasePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2,required:true"> 
+										<span id="span2">
+											<input type="file" name="image2" id="image2" accept="image/*" onchange="check(this,'span2')">
+										</span>
 									</td>
-									<td ></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('fm2','image2','aimage1','imagePre2','divPreview2')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('image2', 'divPreview2')">删除</button></td>
 								</tr>
-								<tr>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="120px">商品介绍：</td>
-									<td align="left" colspan="5">
-<!-- 										<div id="description" style="width:200px;"></div> -->
-										<textarea id="description" ></textarea>
-										<input type="hidden" name="description" id="description2">
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm3" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片三：</td>
+									<td>
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image3">
+										<div id="divPreview3" >
+											<a id="aimage3" href=""><img id="imagePre3" src=""></a>
+										</div>
 									</td>
+									<td width="200px" align="left">
+										<span id="span3">
+											<input type="file" name="image3" id="image3" accept="image/*" onchange="check(this,'span3')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('fm3','image3','aimage3','imagePre3','divPreview3')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('image3', 'divPreview3')">删除</button></td>
 								</tr>
-							</table>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td width="1200px">
-					<fieldset style="font-size: 14px;width:1100px;height:auto;">
-						<legend style="color: blue;">售卖形式</legend>
-						<table border="0">
-							<tr>
-								<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
-								<td width="80px">正常售卖：</td>
-								<td width="200px">
-										<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-								</td>
-							</tr>
-							<tr>
-								<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
-								<td width="80px">积分兑换：</td>
-								<td width="200px">
-										<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-								</td>
-							</tr>
-						</table>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td width="1200px">
-					<fieldset style="font-size: 14px;width:1100px;height:auto;">
-						<legend style="color: blue;">商品图片</legend>
-						<table border="0">
-							<tr>
-								<td width="20px"><span style="color: red;">*</span></td>
-								<td width="80px">基本图片：</td>
-								<td width="200px" align="left">
-									<span id="span0">
-										<input type="file" name="overview" id="overview" accept="image/*" onchange="check(this,'span0')" class="easyui-validatebox">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="previewImage('overview')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('overview', 'overview', 'span0')">删除</button> </td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图一：</td>
-								<td width="200px" align="left">
-									<span id="span1">
-										<input type="file" name="others" id="image1" accept="image/*" onchange="check(this,'span1')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image1')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image1', 'image1', 'span1')">删除</button> </td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图二：</td>
-								<td width="200px" align="left">
-									<span id="span2">
-										<input type="file" name="others" id="image2" accept="image/*" onchange="check(this,'span2')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image2')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image2', 'image2', 'span2')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图三：</td>
-								<td width="200px" align="left">
-									<span id="span3">
-										<input type="file" name="others" id="image3" accept="image/*" onchange="check(this,'span3')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image3')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image3', 'image3', 'span3')">删除</button> </td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图四：</td>
-								<td width="200px" align="left">
-									<span id="span4">
-										<input type="file" name="others" id="image4" accept="image/*" onchange="check(this,'span4')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image4')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image4', 'image4', 'span4')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图五：</td>
-								<td width="200px" align="left">
-									<span id="span5">
-										<input type="file" name="others" id="image5" accept="image/*" onchange="check(this,'span5')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image5')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image5', 'image5', 'span5')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图六：</td>
-								<td width="200px" align="left">
-									<span id="span6">
-										<input type="file" name="others" id="image6" accept="image/*" onchange="check(this,'span6')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image6')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image6', 'image6', 'span6')">删除</button></td>
-							</tr>
-						</table>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td width="1200px">
-					<fieldset style="font-size: 14px;width:1100px;height:auto;">
-						<legend style="color: blue;">商品类别选择</legend>
-						<table border="0">
-							<tr>
-								<td width="20px"></td>
-								<td><button type="button" onclick="openDialog()">选择类别</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td>
-									<div id="selectCategorys">
-											
-									</div>
-								</td>
-							</tr>
-						</table>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td align="center"><button type="button" onclick="doSubmit()">保存</button></td>
-			</tr>
-		</table>
-	</form>
-	<div id="imageDia" class="easyui-dialog" title="图片预览" style="width:400px;height:400px;"  
-        data-options="iconCls:'icon-add',resizable:true,modal:true,inline:false,closed:true">
-<!-- 	        <div id="pic" runat="server" style="filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod=scale); -->
-<!--                         width: 100px; height: 100px; display: none">  -->
-<!--             </div> -->
-	        <div style="text-align:center;">
-	        	<img id="perviewImage" name="perviewImage" src="" />
-	        </div>
-<!-- 	        <div style="position: absolute;top: 350px;left:250px;text-align:right;"> -->
-<!--         	&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="javascript:$('#imageDia').dialog('close');">关闭</button> -->
-<!--         </div> -->
-	</div> 
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm4" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片四：</td>
+									<td>
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image4">
+										<div id="divPreview4" >
+											<a id="aimage4" href=""><img id="imagePre4" src=""></a>
+										</div>
+									</td>
+									<td width="200px" align="left">
+										<span id="span4">
+											<input type="file" name="image4" id="image4" accept="image/*" onchange="check(this,'span4')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('fm4','image4','aimage4','imagePre4','divPreview4')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('image4', 'divPreview4')">删除</button></td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm5" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片五：</td>
+									<td>
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image5">
+										<div id="divPreview5" >
+											<a id="aimage5" href=""><img id="imagePre5" src=""></a>
+										</div>
+									</td>
+									<td width="200px" align="left">
+										<span id="span5">
+											<input type="file" name="image5" id="image5" accept="image/*" onchange="check(this,'span5')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('fm5','image5','aimage5','imagePre5','divPreview5')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('image5', 'divPreview5')">删除</button></td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm6" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片六：</td>
+									<td>
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image6">
+										<div id="divPreview6" >
+											<a id="aimage6" href=""><img id="imagePre6" src=""></a>
+										</div>
+									</td>
+									<td width="200px" align="left">
+										<span id="span6">
+											<input type="file" name="image6" id="image6" accept="image/*" onchange="check(this,'span6')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('fm6','image6','aimage6','imagePre6','divPreview6')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('image6', 'divPreview6')">删除</button></td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    </table>
+	    </div>
+	</div>
 	<div id="dd" class="easyui-dialog" title="选择商品类别" style="width:400px;height:400px;"  
         data-options="resizable:false,modal:true,closed:true">  
         <ul id="tt2" class="easyui-tree" style="margin-top:10px;margin-left:20px;" data-options="url:'<%=request.getContextPath()%>/category/get_tree_nodes2',checkbox:true,onlyLeafCheck:true"></ul>
         <div style="position: absolute;top: 350px;left:250px;text-align:right;">
         	<button type="button" onclick="selectCategory()">确定</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="javascript:$('#dd').dialog('close');">关闭</button>
         </div>
+	</div>
+	<div id="imageDia" class="easyui-dialog" title="图片预览" style="width:400px;height:400px;"  
+		        data-options="iconCls:'icon-add',resizable:true,modal:true,inline:false,closed:true">
+			        <div style="text-align:center;">
+			        	<img id="perviewImage" name="perviewImage" src="" />
+			        </div>
 	</div> 
 </body>
 </html>
