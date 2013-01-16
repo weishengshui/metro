@@ -42,7 +42,6 @@
 				resizable:true,
 				title:'预览图片'
 			});
-			//parent.parent.dialog("预览图片",url,width,height);
 		}
 		function doSubmit(){
 			$('#fm').form('submit',{
@@ -67,7 +66,11 @@
 		$('#dd').dialog('center');
 		$('#dd').dialog('open');
 	}
-	function uploadImage(fileId,formId, keyId, aimageId,imageId,divPreviewId){
+	function openAddIamgeDialog(){
+		$('#addImage').dialog('center');
+		$('#addImage').dialog('open');
+	}
+	function uploadImage(fileId,formId, keyId, aimageId,imageId, addAimageId, addImageId,divPreviewId, addDivPreviewId){
 		if($('#'+fileId).val()==""){
 			alert("请先添加图片");
 			return ;
@@ -84,26 +87,28 @@
 				$('#imageSessionName_imageForm').val(result.imageSessionName);
 				$('#'+aimageId).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
 				$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
+				$('#'+addAimageId).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
+				$('#'+addImageId).attr('src',baseURL+'/archive/showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
 				style="display:none";
 		    	document.getElementById(divPreviewId).style.display = "";
+		    	document.getElementById(addDivPreviewId).style.display = "";
 			}
 		}); 
 	}
-	function deleteImage(keyId, divPreviewId){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
+	function deleteImage(keyId, divPreviewId,addDivPreviewiD){ 
 		$.ajax({
 			url:'deleteImage',
 			data:'imageSessionName='+$('#imageSessionName_imageForm').val()+'&key='+$('#'+keyId).val(),
 			dataType:'json',
 			async:false,
 			success:function(data){
-				
 			}
 		});
 		style="display:none";
     	document.getElementById(divPreviewId).style.display = "none";
-		//$('#span1').html("<input type=file name=logo2 id=logo2 accept=image/* onchange=check(this,'span1') />");
+    	document.getElementById(addDivPreviewiD).style.display = "none";
 	}
-	function deleteInputFile(name, id, spanId){
+	function deleteInputFile(name, id, spanId){// 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
 		$('#'+spanId).html("<input type=file name="+ name +" id="+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
 	}
 </script>
@@ -191,8 +196,29 @@
 			</div> 
 	    </div>
 	    <div title="图片维护" style="padding:20px;">
-		    <form action="imageUpload" id="fm2" method="post" enctype="multipart/form-data">
-		    	<table>
+	    	<table>
+	    		<tr><td align="center">图片</td></tr>
+	    		<tr>
+	    			<td align="center">
+	    				<div id="divPreview" >
+							<a id="aimage1" href=""><img id="image1" src=""></a><br>
+							<button type="button"  onclick="deleteImage('key','divPreview','addDivPreview')">删除</button>
+						</div>
+	    			</td>
+	    		</tr>
+	    		<tr>
+	    			<td align="center">
+	    				<button type="button" onclick="openAddIamgeDialog()">上传图片</button>
+	    			</td>
+	    		</tr>
+	    	</table>
+	    </div>
+    </div>
+    <div id="addImage" class="easyui-dialog" title="上传图片" style="width:600px;height:200px;"  
+		        data-options="resizable:true,modal:true,inline:false,closed:true">
+	        <div style="text-align:center;">
+	        	<form action="imageUpload" id="fm2" method="post" enctype="multipart/form-data">
+			    	<table>
 			    	<tr>
 						<td width="20px"></td>
 						<td width="80px">图片：</td>
@@ -200,9 +226,8 @@
 							<input type="hidden" name="path" value="BRAND_IMAGE_BUFFER">
 							<input type="hidden" name="key" id="key" />
 							<input type="hidden" name="imageSessionName" id="imageSessionName_imageForm">
-							<div id="divPreview" >
-<!-- 								<img id="imgHeadPhoto" src=""/> -->
-								<a id="aimage1" href=""><img id="image1" src=""></a>
+							<div id="addDivPreview" >
+								<a id="addAimage1" href=""><img id="addImage1" src=""></a>
 							</div>
 						</td>
 						<td width="200px" align="left">
@@ -210,13 +235,13 @@
 								<input type="file" name="file" id="file1" accept="image/*" onchange="check(this,'span1')">
 							</span>
 						</td>
-						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file1','fm2', 'key', 'aimage1','image1','divPreview')">上传</button></td>
-						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key','divPreview')">删除</button></td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file1','fm2', 'key', 'aimage1','image1','addAimage1','addImage1','divPreview','addDivPreview')">上传</button></td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key','divPreview','addDivPreview')">删除</button></td>
 					</tr>
 			    </table>
 		    </form>
-	    </div>
-    </div>
+        </div>
+	</div>
     <div id="divDialog">
     	<iframe scrolling="auto" id='openIframe' name="openIframe" frameborder="0"  src="" style="width:100%;height:100%;overflow: hidden;"></iframe> 
 	</div>
