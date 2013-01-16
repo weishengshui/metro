@@ -21,35 +21,16 @@ public class QuartzManager {
          scheduler = (StdScheduler) context.getBean("schedulerFactory");  
 	}
 
-	public static boolean enableCronSchedule(CustomJob schedulingJob, boolean isStateFull,JobDetail jobDetail) {
-		if (schedulingJob == null) {
-			return false;
-		}
+	public static boolean enableCronSchedule(JobDetail jobDetail,String name,String timer) {
+		
 		try {
-			CronTrigger trigger = (CronTrigger) scheduler
-					.getTrigger(schedulingJob.getTriggerName(),
-							schedulingJob.getJobGroup());
-			if (null == trigger) {
-//				JobDetail jobDetail = null;
-//				if (isStateFull) {
-//					jobDetail = new JobDetail(schedulingJob.getJobId(),
-//							schedulingJob.getJobGroup(),
-//							schedulingJob.getStateFulljobExecuteClass());
-//				} else {
-//					jobDetail = new JobDetail(schedulingJob.getJobId(),
-//							schedulingJob.getJobGroup(),
-//							schedulingJob.getJobExecuteClass());
-//				}
-//				jobDetail.setJobDataMap(paramsMap);
-				trigger = new CronTrigger(schedulingJob.getTriggerName(),
-						schedulingJob.getJobGroup(),
-						schedulingJob.getCronExpression());
-				scheduler.scheduleJob(jobDetail, trigger);
-			} else {
-				trigger.setCronExpression(schedulingJob.getCronExpression());
-				scheduler.rescheduleJob(trigger.getName(), trigger.getGroup(),
-						trigger);
-			}
+			
+	            scheduler.addJob(jobDetail, true);  
+
+	            CronTrigger cronTrigger =new CronTrigger(name, Scheduler.DEFAULT_GROUP, jobDetail.getName(), Scheduler.DEFAULT_GROUP);  
+	            cronTrigger.setCronExpression(timer);  
+
+	            scheduler.scheduleJob(cronTrigger); 
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;

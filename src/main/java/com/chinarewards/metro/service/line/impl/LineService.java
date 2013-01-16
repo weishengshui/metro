@@ -252,6 +252,12 @@ public class LineService implements ILineService {
 	}
 	
 	@Override
+	public MetroSite findSiteByName(String name) {
+		String hql = "from MetroSite where name = ?";
+		return hbDaoSupport.findTByHQL(hql, name);
+	}
+	
+	@Override
 	public List<MetroLine> findLineBySiteId(Integer id) {
 		String sql = "SELECT mls.id, ml.name,mls.orderNo FROM MetroSite ms" +
 					 " LEFT JOIN MetroLineSite mls ON ms.id = mls.siteId LEFT JOIN MetroLine ml ON mls.lineId = ml.id"+

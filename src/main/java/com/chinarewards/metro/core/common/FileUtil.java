@@ -161,13 +161,14 @@ public class FileUtil {
 		ImageInfo imageInfo = new ImageInfo();
 
 		File imgFile = new File(path, fileName);
+		System.out.println("imgFile.exists() is "+imgFile.exists());
 		BufferedImage buff = ImageIO.read(imgFile);
 		imageInfo.setWidth(buff.getWidth());
 		imageInfo.setHeight(buff.getHeight());
 
 		return imageInfo;
 	}
-	
+
 	/**
 	 * 将临时文件转移到正式目录，返回正式目录文件的url
 	 * 
@@ -177,14 +178,16 @@ public class FileUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String moveFile(String fromPath, String fromFileName, String toPath) throws IOException{
-		String toFileName = fromFileName.substring(Constants.UPLOAD_TEMP_UID_PREFIX.length());
-		
-		File source = new File(fromPath,fromFileName);
+	public static String moveFile(String fromPath, String fromFileName,
+			String toPath) throws IOException {
+		String toFileName = fromFileName
+				.substring(Constants.UPLOAD_TEMP_UID_PREFIX.length());
+
+		File source = new File(fromPath, fromFileName);
 		FileInputStream fis = new FileInputStream(source);
 		FileUtils.copyInputStreamToFile(fis, new File(toPath, toFileName));
 		source.delete(); // delete temp file
-		
+
 		return toFileName;
 	}
 

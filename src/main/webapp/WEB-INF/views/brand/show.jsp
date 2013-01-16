@@ -32,17 +32,27 @@
 		});
 		
 		function show(url,width,height){
-			parent.parent.dialog("预览图片",url,width,height);
+			width = width> 500 ? 500: width;
+			height = height> 700 ? 500: height;
+			$("#openIframe").attr("src",url);
+			$("#divDialog").dialog({
+				height:height,
+				width:width,
+				modal:true,
+				resizable:true,
+				title:'预览图片'
+			});
+			//parent.parent.dialog("预览图片",url,width,height);
 		}
-	function doSubmit(){
-		$('#fm').form('submit',{
-			success:function(result){
-				result = eval('(' + result + ')');
-				alert(result.msg);
-				$('#_id').val(result.id);		
-			}
-		}); 
-	}
+		function doSubmit(){
+			$('#fm').form('submit',{
+				success:function(result){
+					result = eval('(' + result + ')');
+					alert(result.msg);
+					$('#_id').val(result.id);		
+				}
+			}); 
+		}
 	
 	function check(path,spanId){
 		var filepath=path.value;
@@ -57,44 +67,32 @@
 		$('#dd').dialog('center');
 		$('#dd').dialog('open');
 	}
-	function uploadImage(){
-		if($('#logo2').val()==""){
+	function uploadImage(fileId,formId, keyId, aimageId,imageId,divPreviewId){
+		if($('#'+fileId).val()==""){
 			alert("请先添加图片");
 			return ;
 		}
-		$('#fm2').form('submit',{
+		$('#'+formId).form('submit',{
 			success:function(result){
 				result = eval('('+result+')');
+				if(!result.key){
+					alert("请检查图片是否是完好的");
+					return;
+				}
+				$('#'+keyId).val(result.key);
 				$('#imageSessionName_dataForm').val(result.imageSessionName);
 				$('#imageSessionName_imageForm').val(result.imageSessionName);
-				$('#aimage1').attr('href','javascript:show(\'brand/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
-				$('#image1').attr('src','showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
+				$('#'+aimageId).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
+				$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
 				style="display:none";
-		    	document.getElementById('divPreview').style.display = "";
+		    	document.getElementById(divPreviewId).style.display = "";
 			}
 		}); 
 	}
-	function imageDelete(){
-		$('#span1').html("<input type=file name=logo2 id=logo2 accept=image/* onchange=check(this,'span1') />");
-		$('#imgHeadPhoto').attr('width','0px');
-		$('#imgHeadPhoto').attr('height','0px');
-		var newPreview =document.getElementById("divNewPreview");
-        if(newPreview!=null){
-        	style="display:none";
-        	document.getElementById('divPreview').style.display = "";
-        	document.getElementById('divNewPreview').style.display = "none";
-			// $('#divNewPreview').attr('style','display:none');// ie
-        }
-	}
-	
-	function deleteImage(){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
-		if($('#imageSessionName_imageForm').val() == ""){
-			alert("请先上传图片");
-			return;
-		}
+	function deleteImage(keyId, divPreviewId){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
 		$.ajax({
 			url:'deleteImage',
-			data:'imageSessionName='+$('#imageSessionName_imageForm').val(),
+			data:'imageSessionName='+$('#imageSessionName_imageForm').val()+'&key='+$('#'+keyId).val(),
 			dataType:'json',
 			async:false,
 			success:function(data){
@@ -102,11 +100,11 @@
 			}
 		});
 		style="display:none";
-    	document.getElementById('divPreview').style.display = "none";
+    	document.getElementById(divPreviewId).style.display = "none";
 		//$('#span1').html("<input type=file name=logo2 id=logo2 accept=image/* onchange=check(this,'span1') />");
 	}
 	function deleteInputFile(name, id, spanId){
-		$('#'+spanId).html("<input type=file name="+ name +" id=logo2"+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
+		$('#'+spanId).html("<input type=file name="+ name +" id="+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
 	}
 </script>
 
@@ -199,24 +197,28 @@
 						<td width="20px"></td>
 						<td width="80px">图片：</td>
 						<td>
-							<input type="hidden" id="imageUrl" name="imageUrl"/>
+							<input type="hidden" name="path" value="BRAND_IMAGE_BUFFER">
+							<input type="hidden" name="key" id="key" />
 							<input type="hidden" name="imageSessionName" id="imageSessionName_imageForm">
 							<div id="divPreview" >
 <!-- 								<img id="imgHeadPhoto" src=""/> -->
-								<a id="aimage1" href="javascript:show('line/shopPicShow?path=${path }&fileName=${file.url }',250,270)"><img id="image1" src=""></a>
+								<a id="aimage1" href=""><img id="image1" src=""></a>
 							</div>
 						</td>
 						<td width="200px" align="left">
 							<span id="span1">
-								<input type="file" name="logo2" id="logo2" accept="image/*" onchange="check(this,'span1')">
+								<input type="file" name="file" id="file1" accept="image/*" onchange="check(this,'span1')">
 							</span>
 						</td>
-						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage()">上传</button></td>
-						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage()">删除</button></td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file1','fm2', 'key', 'aimage1','image1','divPreview')">上传</button></td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key','divPreview')">删除</button></td>
 					</tr>
 			    </table>
 		    </form>
 	    </div>
     </div>
+    <div id="divDialog">
+    	<iframe scrolling="auto" id='openIframe' name="openIframe" frameborder="0"  src="" style="width:100%;height:100%;overflow: hidden;"></iframe> 
+	</div>
 </body>
 </html>

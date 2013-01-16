@@ -26,7 +26,7 @@
 		</property>
 		<property name="hibernateProperties">
 			<props>
-				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<!--relese rc2 <prop key="hibernate.hbm2ddl.auto">update</prop> -->
 				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
 				<prop key="hibernate.connection.release_mode">after_transaction</prop>
 				<prop key="hibernate.show_sql">true</prop>
@@ -80,9 +80,19 @@
 	
 <!--  	<import resource="classpath:timer.xml"/> -->
  	
+ 	<!--无法通过注解的方式注入 -->
  	
 	 <bean name="initTelephoneTask" class="com.chinarewards.metro.service.message.InitTelephoneTask" init-method="init" destroy-method="destroy">
-	</bean>
+	 </bean>
+	 <bean id="messageservice" class="com.chinarewards.metro.service.message.impl.MessageService" />
+<!-- 	 <bean name="quartzSendMessage" class="com.chinarewards.metro.core.dynamicquartz.QuartzSendMessage" > -->
+<!--   			<property name="messageservice" ref="messageservice" /> -->
+<!-- 	  		<property name="communicationService" ref="communicationService" /> -->
+<!-- 	  		<property name="taskExecutor" ref="taskExecutor" /> -->
+<!--   	</bean> -->
+	
+	
+	
 	<bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">        
 	    <!-- 核心线程数，默认为1 -->        
 	    <property name="corePoolSize" value="10" />        

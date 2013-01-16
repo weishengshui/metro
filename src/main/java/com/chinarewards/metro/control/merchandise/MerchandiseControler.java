@@ -8,7 +8,9 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -29,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.chinarewards.metro.core.common.CommonUtil;
 import com.chinarewards.metro.core.common.Constants;
+import com.chinarewards.metro.core.common.Dictionary;
 import com.chinarewards.metro.core.common.FileUtil;
 import com.chinarewards.metro.core.common.Page;
 import com.chinarewards.metro.core.common.SystemTimeProvider;
@@ -91,14 +94,22 @@ public class MerchandiseControler {
 	 * @return
 	 */
 	@RequestMapping("/show")
-	public String showCreateMerchandise(Model model, String id) {
+	public String showCreateMerchandise(HttpSession session, Model model, String id) {
 
 		// prepare data
 		Merchandise merchandise = merchandiseService
 				.findMerchandiseByMercCataId(id);
 		List<MerchandiseCatalog> catalogs = merchandiseService
 				.findMercCatalogsByMercIdAndNuit(merchandise.getId());
-		List<CategoryVo> categoryVos = merchandiseService.findCategorysByMerchandise(merchandise);
+		List<CategoryVo> categoryVos = merchandiseService
+				.findCategorysByMerchandise(merchandise);
+		
+		String imageSessionName = UUIDUtil.generate();
+		Map<String, MerchandiseFile> images = merchandiseService.findMerchandiseFIlesByMerchandise(merchandise);
+		System.out.println("merchandise images size is "+ images.size());
+		session.setAttribute(imageSessionName, images);
+		model.addAttribute("images", CommonUtil.toJson(images));
+		model.addAttribute("imageSessionName", imageSessionName);
 
 		model.addAttribute("merchandise", merchandise);
 		model.addAttribute("catalogs", catalogs);
@@ -115,6 +126,7 @@ public class MerchandiseControler {
 	 */
 	@RequestMapping("/add")
 	public String add(Model model) {
+		
 		return "merchandise/create";
 	}
 
@@ -144,16 +156,15 @@ public class MerchandiseControler {
 	 * @param mod
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	@RequestMapping("/create")
 	@ResponseBody
-	public void createOrUpdateMerchandise(
-			@RequestParam("overview") MultipartFile overview,
-			@RequestParam("others") MultipartFile[] others,
-			HttpServletResponse response,
-			@ModelAttribute Merchandise merchandise, BindingResult result,
-			Model mod, String rmbUnitId, String binkeUnitId, Double rmbPrice,
-			Double binkePrice, Boolean rmb, Boolean binke, String[] categId,
-			String[] status, Long[] displaySort) throws IOException {
+	public void createOrUpdateMerchandise(HttpServletResponse response,HttpSession session, 
+			String imageSessionName, @ModelAttribute Merchandise merchandise,
+			BindingResult result, Model mod, String rmbUnitId,
+			String binkeUnitId, Double rmbPrice, Double binkePrice,
+			Boolean rmb, Boolean binke, String[] categId, String[] status,
+			Long[] displaySort) throws IOException {
 
 		PrintWriter out = null;
 		try {
@@ -169,10 +180,22 @@ public class MerchandiseControler {
 					merchandise, result);
 
 			List<MerchandiseFile> files = new ArrayList<MerchandiseFile>();
+			Map<String, MerchandiseFile> images = (Map<String, MerchandiseFile>)session.getAttribute(imageSessionName);
+			if(null !=  images && images.size() > 0){
+				for(Map.Entry<String, MerchandiseFile> entry : images.entrySet()){
+					MerchandiseFile image = entry.getValue();
+					if(image.getUrl().startsWith(Constants.UPLOAD_TEMP_UID_PREFIX)){ //把临时文件移到正式目录
+						image.setUrl(FileUtil.moveFile(Constants.MERCHANDISE_IMAGE_BUFFER, image.getUrl(), Constants.MERCHANDISE_IMAGE_DIR));
+					}
+					files.add(image);
+				}
+			}
+			
 			List<CategoryVo> categoryVos = new ArrayList<CategoryVo>();
 			if (null != categId) {
 				for (int i = 0, length = categId.length; i < length; i++) {
-					categoryVos.add(new CategoryVo(categId[i], merchandise.getCode(),
+					categoryVos.add(new CategoryVo(categId[i], merchandise
+							.getCode(),
 							MerchandiseStatus.fromString(status[i]),
 							displaySort[i]));
 				}
@@ -220,23 +243,14 @@ public class MerchandiseControler {
 						}
 					}
 				}
-				if (!overview.isEmpty()) {
-					files.add(saveMerchandiseFile(overview));
-				}
-				if (null != others && others.length > 0) {
-					for (MultipartFile other : others) {
-						if (!other.isEmpty()) {
-							files.add(saveMerchandiseFile(other));
-						}
-					}
-				}
 				if (null == merchandise.getId()
 						|| merchandise.getId().isEmpty()) { // insert
 
 					merchandiseService.createMerchandise(merchandise, files,
 							catalogVos, categoryVos);
-					out.println(CommonUtil.toJson(new AjaxResponseCommonVo(
-							"添加成功")));
+					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo("保存成功");
+					commonVo.setId(merchandise.getId());
+					out.println(CommonUtil.toJson(commonVo));
 					out.flush();
 					return;
 				} else {// update
@@ -273,10 +287,10 @@ public class MerchandiseControler {
 					}
 					merchandiseService.updateMerchandise(merchandise, files,
 							catalogVos, categoryVos);
-					out.println(CommonUtil.toJson(new AjaxResponseCommonVo(
-							"修改成功")));
+					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo("保存成功");
+					commonVo.setId(merchandise.getId());
+					out.println(CommonUtil.toJson(commonVo));
 					out.flush();
-					return;
 				}
 			}
 		} catch (FileNotFoundException fileNotFoundException) {
@@ -595,7 +609,7 @@ public class MerchandiseControler {
 	@RequestMapping("/checkDisplaySortExists")
 	@ResponseBody
 	public String checkDisplaySortExists(String cateId, Long displaySort) {
-		
+
 		CategoryVo categoryVo = new CategoryVo(cateId, null, null, displaySort);
 		if (merchandiseService.checkDisplaySortExists(categoryVo)) {
 			return "{msg:" + true + "}";
@@ -603,77 +617,112 @@ public class MerchandiseControler {
 			return "{msg:" + false + "}";
 		}
 	}
-	
+
 	/**
 	 * 将上传文件保存至临时文件夹
 	 */
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/imageUpload", method = RequestMethod.POST)
 	@ResponseBody
-	public void imageUpload(MultipartFile mFile,
-			HttpSession session, String imageSessionName,
-			HttpServletResponse response) {
+	public void imageUpload(
+			@RequestParam(value = "overview", required = false) MultipartFile overview,
+			@RequestParam(value = "others", required = false) MultipartFile others,
+			String path, String key, HttpSession session,
+			String imageSessionName, HttpServletResponse response) {
 
-		FileUtil.pathExist(Constants.MERCHANDISE_IMAGE_BUFFER);
-		PrintWriter out = null;
-		if (null == imageSessionName || imageSessionName.isEmpty()) {
-			imageSessionName = UUIDUtil.generate();
+		MultipartFile file = null;
+		boolean isOverview = false;
+		if (null != overview) {
+			file = overview;
+			isOverview = true;
+		} else if (null != others) {
+			file = others;
+		} else {
+			return;
 		}
-		try {
-			response.setContentType("text/html; charset=utf-8");
-			out = response.getWriter();
-			String fileName = mFile.getOriginalFilename();
-			String suffix = getSuffix(fileName);
-			String fileNewName = Constants.UPLOAD_TEMP_UID_PREFIX
-					+ UUIDUtil.generate() + suffix;
-			FileUtil.saveFile(mFile.getInputStream(),
-					Constants.BRAND_IMAGE_BUFFER, fileNewName);
-			FileItem logo = (FileItem) session.getAttribute(imageSessionName);
-			if (null != logo) {// 删除之前的遗留图片
-				if (logo.getUrl().startsWith(Constants.UPLOAD_TEMP_UID_PREFIX)) {
-					File file = new File(Constants.BRAND_IMAGE_BUFFER,
-							logo.getUrl());
-					file.delete();
-				}
+		if (file.isEmpty()) {// 没有数据
+			return;
+		}
+
+		path = Dictionary.getPicPath(path);
+		if (!"".equals(path)) {
+			FileUtil.pathExist(path);
+			PrintWriter out = null;
+			if (null == imageSessionName || imageSessionName.isEmpty()) {
+				imageSessionName = UUIDUtil.generate();
 			}
+			try {
+				response.setContentType("text/html; charset=utf-8");
+				out = response.getWriter();
+				String fileName = file.getOriginalFilename();
+				String suffix = getSuffix(fileName);
+				String fileNewName = Constants.UPLOAD_TEMP_UID_PREFIX
+						+ UUIDUtil.generate() + suffix;
+				FileUtil.saveFile(file.getInputStream(), path, fileNewName);
+				Map<String, MerchandiseFile> images = (HashMap<String, MerchandiseFile>) session
+						.getAttribute(imageSessionName);
+				if (null == images) {
+					images = new HashMap<String, MerchandiseFile>();
+				} else {
+					MerchandiseFile image = images.get(key);
+					if (null != image) { // 删除之前的遗留图片
+						if (image.getUrl().startsWith(
+								Constants.UPLOAD_TEMP_UID_PREFIX)) {
+							File tempFile = new File(path, image.getUrl());
+							tempFile.delete();
+						}
+						images.remove(key);
+					}
+				}
 
-			logo = new FileItem();
-			System.out.println("logo is " + logo);
-			ImageInfo imageInfo = FileUtil.getImageInfo(
-					Constants.BRAND_IMAGE_BUFFER, fileNewName);
-			logo.setWidth(imageInfo.getWidth());
-			logo.setHeight(imageInfo.getHeight());
-			logo.setCreatedAt(SystemTimeProvider.getCurrentTime());
-			logo.setCreatedBy(UserContext.getUserId());
-			logo.setFilesize(mFile.getSize());
-			logo.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-			logo.setLastModifiedBy(UserContext.getUserId());
-			logo.setMimeType(mFile.getContentType());
-			logo.setOriginalFilename(fileName);
-			logo.setUrl(fileNewName);
+				MerchandiseFile image = new MerchandiseFile();
+				System.out.println("image is " + image);
+				ImageInfo imageInfo = FileUtil.getImageInfo(path, fileNewName);
+				image.setWidth(imageInfo.getWidth());
+				image.setHeight(imageInfo.getHeight());
+				image.setCreatedAt(SystemTimeProvider.getCurrentTime());
+				image.setCreatedBy(UserContext.getUserId());
+				image.setFilesize(file.getSize());
+				image.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+				image.setLastModifiedBy(UserContext.getUserId());
+				image.setMimeType(file.getContentType());
+				image.setOriginalFilename(fileName);
+				image.setUrl(fileNewName);
+				if (isOverview) {
+					image.setImageType(MerchandiseImageType.OVERVIEW);
+				} else {
+					image.setImageType(MerchandiseImageType.OTHERS);
+				}
+				if (null == key || key.isEmpty()) {
+					key = "A" + UUIDUtil.generate();
+				}
+				images.put(key, image);
 
-			session.setAttribute(imageSessionName, logo);
+				session.setAttribute(imageSessionName, images);
 
-			out.write("{url:\'" + logo.getUrl() + "\',width:\'"
-					+ logo.getWidth() + "\',height:\'" + logo.getHeight()
-					+ "\',imageSessionName:\'" + imageSessionName
-					+ "\',contentType:\'" + logo.getMimeType() + "\'}");
-			out.flush();
-		} catch (FileNotFoundException e) {
-			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
-					+ e.getMessage())));
-			out.flush();
-			e.printStackTrace();
-		} catch (IOException e) {
-			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
-					+ e.getMessage())));
-			out.flush();
-			e.printStackTrace();
-		} catch (Exception e) {
-			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
-					+ e.getMessage())));
-			out.flush();
-			e.printStackTrace();
+				out.write("{url:\'" + image.getUrl() + "\',width:\'"
+						+ image.getWidth() + "\',height:\'" + image.getHeight()
+						+ "\',imageSessionName:\'" + imageSessionName
+						+ "\',contentType:\'" + image.getMimeType()
+						+ "\',key:\'" + key + "\'}");
+				out.flush();
+			} catch (FileNotFoundException e) {
+				out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+						+ e.getMessage())));
+				out.flush();
+				e.printStackTrace();
+			} catch (IOException e) {
+				out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+						+ e.getMessage())));
+				out.flush();
+				e.printStackTrace();
+			} catch (Exception e) {
+				out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+						+ e.getMessage())));
+				out.flush();
+				e.printStackTrace();
+			}
 		}
 	}
-	
+
 }

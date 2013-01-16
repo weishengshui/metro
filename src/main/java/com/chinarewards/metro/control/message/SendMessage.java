@@ -68,7 +68,7 @@ public class SendMessage implements Runnable{
 	 */
 	@Override
 	public void run() {
-		try {
+	
 			if(!StringUtil.isEmpty(telephones)){
 				String[] t=telephones.split(",");
 			System.out.println("---------------");
@@ -76,8 +76,13 @@ public class SendMessage implements Runnable{
 				messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_EXECUTING);
 						for (int i = 0; i < t.length; i++) {
 							if(!t[i].trim().equals("")){
-								this.send(taskid, t[i]);
-								Thread.sleep(2000);
+								try {
+									this.send(taskid, t[i]);
+									Thread.sleep(2000);
+								} catch (Exception e) {
+									
+								   messageservice.updateMessageStates(taskid, t[i], 2);
+								}
 							}
 						}
 						
@@ -88,20 +93,21 @@ public class SendMessage implements Runnable{
 				//当前任务状态变为执行中
 				messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_EXECUTING);	
 				for(MessageTelephone t:telephonelist){
-					
 					if(t!=null){
-						this.send(taskid, t.getTelephone());
-						Thread.sleep(2000);
+						try {
+							if(!t.getTelephone().trim().equals("")){
+								this.send(taskid, t.getTelephone());
+								Thread.sleep(2000);
+							}
+						} catch (Exception e) {
+							messageservice.updateMessageStates(taskid,t.getTelephone(), 2);
+						}
 					}
 				}
 				messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_END);
 				messageservice.updateMessageTaskEndtime(taskid, DateTools.dateToHour());
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
-
 	
 	public void send(String taskid,String tp){
 		//检查当前任务状态

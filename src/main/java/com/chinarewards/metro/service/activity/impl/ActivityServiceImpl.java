@@ -1,6 +1,9 @@
 package com.chinarewards.metro.service.activity.impl;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -8,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.MatchMode;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -56,24 +62,31 @@ public class ActivityServiceImpl implements IActivityService {
 	}
 
 	@Override
-	public List<ActivityInfo> findActivity(ActivityInfo activity, Page page) {
-		Map<String, Object> map = new HashMap<String, Object>();
-		StringBuffer hql = new StringBuffer();
-		hql.append("from ActivityInfo where 1=1");
-		if (StringUtils.isNotEmpty(activity.getActivityName())) {
-			hql.append(" and activityName like :activityName");
-			map.put("activityName", activity.getActivityName());
+	public List<ActivityInfo> findActivity(String activityName,String startDate,String endDate, Page page) {
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			
+			DetachedCriteria criteria = DetachedCriteria.forClass(ActivityInfo.class);
+			if (StringUtils.isNotEmpty(activityName)) {
+				criteria.add(Restrictions.like("activityName", activityName,MatchMode.ANYWHERE));
+			}
+			
+			if (StringUtils.isNotEmpty(startDate)) {
+				criteria.add(Restrictions.eq("startDate", sdf.parse(startDate)));
+			}
+			
+			if (StringUtils.isNotEmpty(endDate)) {
+				criteria.add(Restrictions.eq("endDate", sdf.parse(endDate)));
+			}
+			
+			return hbDaoSupport.findPageByCriteria(page, criteria);
+			
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		if (activity.getStartDate() != null) {
-			hql.append(" and startDate like :startDate");
-			map.put("startDate", activity.getStartDate());
-		}
-		if (activity.getEndDate() != null) {
-			hql.append(" and endDate like :endDate");
-			map.put("endDate", activity.getEndDate());
-		}
-		hql.append(" order by id desc");
-		return hbDaoSupport.findTsByHQLPage(hql.toString(), map, page);
+		return null;
 	}
 
 	@Override
@@ -88,9 +101,9 @@ public class ActivityServiceImpl implements IActivityService {
 		hql.append("from BrandActivity b where 1=1");
 		if (StringUtils.isNotEmpty(brand.getName())) {
 			hql.append(" and b.brand.name like :name");
-			map.put("name", brand.getName());
+			map.put("name", "%"+brand.getName()+"%");
 		}
-
+		
 		List<BrandMode> bms = new LinkedList<BrandMode>();
 
 		List<BrandActivity> list = hbDaoSupport.findTsByHQLPage(hql.toString(),
@@ -120,7 +133,7 @@ public class ActivityServiceImpl implements IActivityService {
 		Map<String, Object> map = new HashMap<String, Object>();
 		StringBuffer hql = new StringBuffer();
 		//SELECT b FROM Brand b WHERE NOT EXISTS (SELECT a.gid FROM BrandActivity a WHERE a.brand.id = b.id)
-		hql.append("SELECT b FROM Brand b WHERE 1=1");
+		hql.append("FROM Brand b WHERE 1=1");
 		
 		if(bat != null && bat.size() > 0){
 			hql.append(" and b.id not in (");
@@ -136,15 +149,15 @@ public class ActivityServiceImpl implements IActivityService {
 		
 		if (StringUtils.isNotEmpty(brand.getName())) {
 			hql.append(" and b.name like :name");
-			map.put("name", brand.getName());
+			map.put("name", "%"+brand.getName()+"%");
 		}
 
 		if (StringUtils.isNotEmpty(brand.getCompanyName())) {
-			hql.append(" and b.companyName like :name");
-			map.put("companyName", brand.getName());
+			hql.append(" and b.companyName like :companyName");
+			map.put("companyName", "%"+brand.getCompanyName()+"%");
 		}
 
-		List<Brand> list = hbDaoSupport.executeQuery(hql.toString(), map, page);
+		List<Brand> list = hbDaoSupport.findTsByHQLPage(hql.toString(), map, page);
 		return list;
 	}
 
@@ -242,17 +255,17 @@ public class ActivityServiceImpl implements IActivityService {
 	}
 
 	@Override
-	public List<BrandMode> findBrandAct(Brand brand, Page page, Integer id) {
+	public List<BrandMode> findBrandAct(String name, Page page, Integer id) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		StringBuffer hql = new StringBuffer();
 		hql.append("from BrandActivity b where 1=1 and b.activityInfo.id = :id");
-		if (StringUtils.isNotEmpty(brand.getName())) {
-			hql.append(" and b.brand.name like :name");
-			map.put("name", brand.getName());
-		}
 		map.put("id",id);
+		if (StringUtils.isNotEmpty(name)) {
+			hql.append(" and b.brand.name like :name");
+			map.put("name", "%"+name+"%");
+		}
+		
 		List<BrandMode> bms = new LinkedList<BrandMode>();
-
 		List<BrandActivity> list = hbDaoSupport.findTsByHQLPage(hql.toString(),
 				map, page);
 		for (BrandActivity bm : list) {
@@ -273,6 +286,13 @@ public class ActivityServiceImpl implements IActivityService {
 		hql.append("from PosBind where mark = 0 and fId = :id");
 		map.put("id",id);
 		return hbDaoSupport.findTsByHQLPage(hql.toString(), map, page);
+	}
+
+	@Override
+	public int checkActNameAndTime(String name, Date dTime) {
+		String hql = "from ActivityInfo where activityName = ? and startDate = ?" ;
+		List<ActivityInfo> infos = hbDaoSupport.findTsByHQL(hql, name,dTime);
+		return (infos != null) ? infos.size() : 0;
 	}
 
 }

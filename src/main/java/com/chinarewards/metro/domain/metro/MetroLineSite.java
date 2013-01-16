@@ -25,11 +25,11 @@ public class MetroLineSite implements Serializable{
 
 	private Integer orderNo;
 
-	@ManyToOne(cascade=CascadeType.ALL)
+	@ManyToOne(cascade=CascadeType.REFRESH)
 	@JoinColumn(name = "lineId", unique = false)
 	private MetroLine line;
 	
-	@ManyToOne(cascade=CascadeType.ALL)
+	@ManyToOne(cascade=CascadeType.REFRESH)
 	@JoinColumn(name = "siteId", unique = false)
 	private MetroSite site;
 	

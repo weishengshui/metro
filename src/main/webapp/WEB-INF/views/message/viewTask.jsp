@@ -31,6 +31,14 @@ $(function(){
 	}
 	 $('#ft').css("display","none");
 	 $('#allt').attr("style","display:none");
+	 
+	 //状态值
+	  var status = ${statusJson};
+	    for(var i=0;i<status.length;i++){
+	        if((${task.taskStates}) == status[i].key){
+	        	$("#states").html(status[i].value);
+	        }
+	    }
 });
 	
 	
@@ -76,6 +84,18 @@ function newSend(){
 		}
 	}); 
 }
+
+function sendResult(v){
+	var sr="";
+	if(v == 1)
+		st='成功';
+	
+	if(v==2)
+		st='失败';
+	if(v==0)
+		st='没发送';
+	return st;
+}
 </script>
 
 </head>
@@ -112,7 +132,7 @@ function newSend(){
 				<td>
 				   状态：
 				</td>
-				<td>
+				<td id="states">
 				   ${task.taskStates}
 				</td>
 			</tr>
@@ -157,7 +177,7 @@ function newSend(){
 	        <tr>  
 	            <th data-options="field:'telephone',width:30">电话号码</th>
 	           <th data-options="field:'sendTime',width:30,formatter:function(v){return dateFormat(v)}">发送时间</th>
-	            <th data-options="field:'states',width:30">发送结果</th>
+	            <th data-options="field:'states',width:30,formatter:function(v){return sendResult(v)}">发送结果</th>
 	        </tr>   
 	    </thead>  
 	 </table> 
@@ -171,14 +191,13 @@ function newSend(){
 	        <tr>  
 	            <th data-options="field:'telephone',width:30">电话号码</th>
 	           <th data-options="field:'sendTime',width:30,formatter:function(v){return dateFormat(v)}">发送时间</th>
-	            <th data-options="field:'states',width:30">发送结果</th>
+	            <th data-options="field:'states',width:30,formatter:function(v){return sendResult(v)}">发送结果</th>
 	        </tr>   
 	    </thead>  
 	 </table> 
 	  <div style="text-align:left;">
   			<br>
   			<button type="button" onclick="newSend();" id="view">重新发送</button>&nbsp;&nbsp;&nbsp;&nbsp;
-  			
 	</div>
 	</div>
 </body>

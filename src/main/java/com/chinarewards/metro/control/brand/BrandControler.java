@@ -1,23 +1,18 @@
 package com.chinarewards.metro.control.brand;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import javax.imageio.ImageIO;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.imgscalr.Scalr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,17 +61,17 @@ public class BrandControler {
 
 	@RequestMapping("/edit")
 	public String edit(HttpSession session, Model model, Integer id) {
-		
+
 		String imageSessionName = UUIDUtil.generate();
 		if (null != id) {
 			Brand brand = brandService.findBrandById(id);
-			session.setAttribute(imageSessionName, brand.getLogo());
+			Map<String, FileItem> images = new HashMap<String, FileItem>();
+			images.put("A"+UUIDUtil.generate(), brand.getLogo());
+			session.setAttribute(imageSessionName, images);
 			model.addAttribute("brand", brand);
-			if(null != brand.getLogo()){
-				model.addAttribute("logo", CommonUtil.toJson(brand.getLogo()));
-			}
+			model.addAttribute("images", CommonUtil.toJson(images));
 			model.addAttribute("imageSessionName", imageSessionName);
-		} 
+		}
 		return "brand/edit";
 	}
 
@@ -160,7 +155,8 @@ public class BrandControler {
 
 		return null;
 	}
-
+	
+	@SuppressWarnings("unchecked")
 	@RequestMapping("/create")
 	@ResponseBody
 	public void createOrUpdateBrand(HttpSession session,
@@ -171,8 +167,15 @@ public class BrandControler {
 			response.setContentType("text/html; charset=utf-8");
 			out = response.getWriter();
 			System.out.println("enter createOrUpdateBrand()");
-
-			FileItem logo = (FileItem) session.getAttribute(imageSessionName);
+			FileItem logo = null;
+			Map<String, FileItem> images = (HashMap<String, FileItem>) session
+					.getAttribute(imageSessionName);
+			if (null != images && images.size() > 0) {
+				for (Map.Entry<String, FileItem> image : images.entrySet()) {
+					logo = image.getValue();
+					break;
+				}
+			}
 			if (null != logo
 					&& logo.getUrl().startsWith(
 							Constants.UPLOAD_TEMP_UID_PREFIX)) {
@@ -215,150 +218,84 @@ public class BrandControler {
 	/**
 	 * 将上传文件保存至临时文件夹
 	 */
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/imageUpload", method = RequestMethod.POST)
 	@ResponseBody
-	public void imageUpload(@RequestParam("logo2") MultipartFile mFile,
-			HttpSession session, String imageSessionName,
+	public void imageUpload(@RequestParam MultipartFile file, String path,
+			String key, HttpSession session, String imageSessionName,
 			HttpServletResponse response) {
 
-		FileUtil.pathExist(Constants.BRAND_IMAGE_BUFFER);
-		PrintWriter out = null;
-		if (null == imageSessionName || imageSessionName.isEmpty()) {
-			imageSessionName = UUIDUtil.generate();
-		}
-		try {
-			response.setContentType("text/html; charset=utf-8");
-			out = response.getWriter();
-			String fileName = mFile.getOriginalFilename();
-			String suffix = getSuffix(fileName);
-			String fileNewName = Constants.UPLOAD_TEMP_UID_PREFIX
-					+ UUIDUtil.generate() + suffix;
-			FileUtil.saveFile(mFile.getInputStream(),
-					Constants.BRAND_IMAGE_BUFFER, fileNewName);
-			FileItem logo = (FileItem) session.getAttribute(imageSessionName);
-			if (null != logo) {// 删除之前的遗留图片
-				if (logo.getUrl().startsWith(Constants.UPLOAD_TEMP_UID_PREFIX)) {
-					File file = new File(Constants.BRAND_IMAGE_BUFFER,
-							logo.getUrl());
-					file.delete();
-				}
-			}
-
-			logo = new FileItem();
-			System.out.println("logo is " + logo);
-			ImageInfo imageInfo = FileUtil.getImageInfo(
-					Constants.BRAND_IMAGE_BUFFER, fileNewName);
-			logo.setWidth(imageInfo.getWidth());
-			logo.setHeight(imageInfo.getHeight());
-			logo.setCreatedAt(SystemTimeProvider.getCurrentTime());
-			logo.setCreatedBy(UserContext.getUserId());
-			logo.setFilesize(mFile.getSize());
-			logo.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-			logo.setLastModifiedBy(UserContext.getUserId());
-			logo.setMimeType(mFile.getContentType());
-			logo.setOriginalFilename(fileName);
-			logo.setUrl(fileNewName);
-
-			session.setAttribute(imageSessionName, logo);
-
-			out.write("{url:\'" + logo.getUrl() + "\',width:\'"
-					+ logo.getWidth() + "\',height:\'" + logo.getHeight()
-					+ "\',imageSessionName:\'" + imageSessionName
-					+ "\',contentType:\'" + logo.getMimeType() + "\'}");
-			out.flush();
-		} catch (FileNotFoundException e) {
-			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
-					+ e.getMessage())));
-			out.flush();
-			e.printStackTrace();
-		} catch (IOException e) {
-			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
-					+ e.getMessage())));
-			out.flush();
-			e.printStackTrace();
-		} catch (Exception e) {
-			out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
-					+ e.getMessage())));
-			out.flush();
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * 获取展示图片
-	 * 
-	 * @param mFile
-	 * @param response
-	 * @throws Exception
-	 */
-	@RequestMapping(value = "/imageShow")
-	public void shopPicShow(String path, String fileName, String contentType,
-			HttpServletResponse response) throws Exception {
-
 		path = Dictionary.getPicPath(path);
 		if (!"".equals(path)) {
 			FileUtil.pathExist(path);
-			File file = new File(path, fileName);
-			response.setContentType(contentType);
-			response.setContentLength((int) file.length());
-			response.setHeader("Content-Disposition", "inline; filename=\""
-					+ file.getName() + "\"");
-			byte[] bbuf = new byte[1024];
-			DataInputStream in = new DataInputStream(new FileInputStream(file));
-			int bytes = 0;
-			ServletOutputStream op = response.getOutputStream();
-			while ((in != null) && ((bytes = in.read(bbuf)) != -1)) {
-				op.write(bbuf, 0, bytes);
+			PrintWriter out = null;
+			if (null == imageSessionName || imageSessionName.isEmpty()) {
+				imageSessionName = UUIDUtil.generate();
 			}
-			in.close();
-			op.flush();
-			op.close();
-		}
-	}
-
-	/**
-	 * 获取展示的缩略图
-	 * 
-	 * @throws Exception
-	 */
-	@RequestMapping("/showGetthumbPic")
-	public void showGetthumbPic(String path, String fileName,
-			String contentType, HttpServletResponse response) throws Exception {
-
-		path = Dictionary.getPicPath(path);
-		if (!"".equals(path)) {
-			FileUtil.pathExist(path);
-			File file = new File(path, fileName);
-			if (file.exists()) {
-				contentType = contentType.toLowerCase();
-				if (contentType.endsWith("png") || contentType.endsWith("jpeg")
-						|| contentType.endsWith("gif")
-						|| contentType.endsWith("jpg")
-						|| contentType.endsWith("bmp")) {
-					BufferedImage im = ImageIO.read(file);
-					if (im != null) {
-						BufferedImage thumb = Scalr.resize(im, 75);
-						ByteArrayOutputStream os = new ByteArrayOutputStream();
-						if (contentType.endsWith("png")) {
-							ImageIO.write(thumb, "PNG", os);
-						} else if (contentType.endsWith("jpeg")
-								|| contentType.endsWith("jpg")) {
-							ImageIO.write(thumb, "JPG", os);
-						} else if (contentType.endsWith("bmp")) {
-							ImageIO.write(thumb, "BMP", os);
-						} else {
-							ImageIO.write(thumb, "GIF", os);
+			try {
+				response.setContentType("text/html; charset=utf-8");
+				out = response.getWriter();
+				String fileName = file.getOriginalFilename();
+				String suffix = getSuffix(fileName);
+				String fileNewName = Constants.UPLOAD_TEMP_UID_PREFIX
+						+ UUIDUtil.generate() + suffix;
+				FileUtil.saveFile(file.getInputStream(), path, fileNewName);
+				Map<String, FileItem> images = (HashMap<String, FileItem>) session
+						.getAttribute(imageSessionName);
+				if (null == images) {
+					images = new HashMap<String, FileItem>();
+				} else {
+					FileItem image = images.get(key);
+					if (null != image) { // 删除之前的遗留图片
+						if (image.getUrl().startsWith(
+								Constants.UPLOAD_TEMP_UID_PREFIX)) {
+							File tempFile = new File(path, image.getUrl());
+							tempFile.delete();
 						}
-						response.setContentType(contentType);
-						ServletOutputStream srvos = response.getOutputStream();
-						response.setContentLength(os.size());
-						response.setHeader("Content-Disposition",
-								"inline; filename=\"" + file.getName() + "\"");
-						os.writeTo(srvos);
-						srvos.flush();
-						srvos.close();
+						images.remove(key);
 					}
 				}
+
+				FileItem image = new FileItem();
+				System.out.println("image is " + image);
+				ImageInfo imageInfo = FileUtil.getImageInfo(path, fileNewName);
+				image.setWidth(imageInfo.getWidth());
+				image.setHeight(imageInfo.getHeight());
+				image.setCreatedAt(SystemTimeProvider.getCurrentTime());
+				image.setCreatedBy(UserContext.getUserId());
+				image.setFilesize(file.getSize());
+				image.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+				image.setLastModifiedBy(UserContext.getUserId());
+				image.setMimeType(file.getContentType());
+				image.setOriginalFilename(fileName);
+				image.setUrl(fileNewName);
+				if(null == key || key.isEmpty()){
+					key = "A"+UUIDUtil.generate();
+				}
+				images.put(key, image);
+
+				session.setAttribute(imageSessionName, images);
+
+				out.write("{url:\'" + image.getUrl() + "\',width:\'"
+						+ image.getWidth() + "\',height:\'" + image.getHeight()
+						+ "\',imageSessionName:\'" + imageSessionName
+						+ "\',contentType:\'" + image.getMimeType() + "\',key:\'"+key+"\'}");
+				out.flush();
+			} catch (FileNotFoundException e) {
+				out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+						+ e.getMessage())));
+				out.flush();
+				e.printStackTrace();
+			} catch (IOException e) {
+				out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+						+ e.getMessage())));
+				out.flush();
+				e.printStackTrace();
+			} catch (Exception e) {
+				out.write(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
+						+ e.getMessage())));
+				out.flush();
+				e.printStackTrace();
 			}
 		}
 	}
@@ -392,13 +329,15 @@ public class BrandControler {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/deleteImage")
 	@ResponseBody
 	public void deleteImage(HttpServletResponse response, HttpSession session,
-			String imageSessionName) throws Exception{
+			String imageSessionName, String key) throws Exception {
 
-		
-		session.removeAttribute(imageSessionName);
+		Map<String, FileItem> images = (Map<String, FileItem>) session
+				.getAttribute(imageSessionName);
+		images.remove(key);
 
 		response.setContentType("text/html; charset=utf-8");
 		PrintWriter out = response.getWriter();

@@ -203,8 +203,14 @@
             	$('#dg').datagrid('cancelEdit', rowIndex).datagrid('deleteRow', rowIndex);
             }
             if(field == 'orderNo'){
-            	$('#dg').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
-            	accept();
+            	var rows = $('#dg').datagrid('getRows');
+            	if(rows.length == 1){
+            		$('#dg').datagrid('selectRow', 0).datagrid('beginEdit', 0);
+            	}else{
+            		$('#dg').datagrid('endEdit', 0);
+            		$('#dg').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
+            		accept();
+            	}
             	editIndex = rowIndex;
             }
         }

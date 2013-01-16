@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.chinarewards.metro.core.common.HBDaoSupport;
 import com.chinarewards.metro.core.common.SystemTimeProvider;
+import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.core.common.UserContext;
 import com.chinarewards.metro.domain.category.Category;
 import com.chinarewards.metro.domain.merchandise.CatalogVo;
@@ -89,10 +90,6 @@ public class MerchandiseService implements IMerchandiseService {
 
 		if (null != files && files.size() > 0) {
 			for (MerchandiseFile file : files) {
-				file.setCreatedAt(SystemTimeProvider.getCurrentTime());
-				file.setCreatedBy(UserContext.getUserId());
-				file.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-				file.setLastModifiedBy(UserContext.getUserId());
 				file.setMerchandise(merchandise);
 				hbDaoSupport.save(file);
 			}
@@ -307,41 +304,32 @@ public class MerchandiseService implements IMerchandiseService {
 			List<MerchandiseFile> files, List<CatalogVo> catalogVos,
 			List<CategoryVo> categoryVos) {
 
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("name", merchandise.getName());
-		params.put("code", merchandise.getCode());
-		params.put("purchasePrice", merchandise.getPurchasePrice());
-		params.put("model", merchandise.getModel());
-		params.put("description", merchandise.getDescription());
-		params.put("lastModifiedBy", UserContext.getUserId());
-		params.put("lastModifiedAt", SystemTimeProvider.getCurrentTime());
-		params.put("id", merchandise.getId());
+		Merchandise merchandiseFromDB = hbDaoSupport.findTById(Merchandise.class, merchandise.getId());
+		merchandiseFromDB.setName(merchandise.getName());
+		merchandiseFromDB.setCode(merchandise.getCode());
+		merchandiseFromDB.setPurchasePrice(merchandise.getPurchasePrice());
+		merchandiseFromDB.setModel(merchandise.getModel());
+		merchandiseFromDB.setDescription(merchandise.getDescription());
+		merchandiseFromDB.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+		merchandiseFromDB.setLastModifiedBy(UserContext.getUserId());
+		hbDaoSupport.update(merchandiseFromDB);
 
-		hbDaoSupport
-				.executeHQL(
-						"UPDATE Merchandise m SET m.name=:name , m.code=:code , m.model=:model , m.purchasePrice=:purchasePrice , m.description=:description , m.lastModifiedBy=:lastModifiedBy , m.lastModifiedAt=:lastModifiedAt WHERE m.id=:id ",
-						params);
-
+		// delete file
+		hbDaoSupport.executeHQL("DELETE MerchandiseFile m WHERE m.merchandise=?", merchandiseFromDB);
+		/*Map<String, Object> map = new HashMap<String, Object>();
+		map.put("id", merchandise.getId());
+		List<MerchandiseFile> filesFromDb = hbDaoSupport.executeQuery(
+				"FROM MerchandiseFile m WHERE m.merchandise.id=:id", map,
+				null);
+		if (null != filesFromDb && filesFromDb.size() > 0) {
+			hbDaoSupport.deleteAll(filesFromDb);
+		}*/
+		
+		
+		// save file
 		if (null != files && files.size() > 0) {
-			// delete file
-			Map<String, Object> map = new HashMap<String, Object>();
-			map.put("id", merchandise.getId());
-			List<MerchandiseFile> filesFromDb = hbDaoSupport.executeQuery(
-					"FROM MerchandiseFile m WHERE m.merchandise.id=:id", map,
-					null);
-			if (null != filesFromDb && filesFromDb.size() > 0) {
-				// 先删除商品对应的图片
-				// TODO 物理删除图片
-				// 删除数据库记录
-				hbDaoSupport.deleteAll(filesFromDb);
-			}
-			// save file
 			for (MerchandiseFile file : files) {
-				file.setCreatedAt(SystemTimeProvider.getCurrentTime());
-				file.setCreatedBy(UserContext.getUserId());
-				file.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-				file.setLastModifiedBy(UserContext.getUserId());
-				file.setMerchandise(merchandise);
+				file.setMerchandise(merchandiseFromDB);
 				hbDaoSupport.save(file);
 			}
 		}
@@ -761,5 +749,19 @@ public class MerchandiseService implements IMerchandiseService {
 			fullName = fullName.substring(0, fullName.length() - 1);
 		}
 		return fullName;
+	}
+
+	@Override
+	public Map<String, MerchandiseFile> findMerchandiseFIlesByMerchandise(
+			Merchandise merchandise) {
+		
+		List<MerchandiseFile> list = hbDaoSupport.findTsByHQL("FROM MerchandiseFile WHERE merchandise=?", merchandise);
+		Map<String, MerchandiseFile> files = new HashMap<String, MerchandiseFile>();
+		if(null != list && list.size() > 0){
+			for(MerchandiseFile file : list){
+				files.put("A"+UUIDUtil.generate(), file);
+			}
+		}
+		return files;
 	}
 }

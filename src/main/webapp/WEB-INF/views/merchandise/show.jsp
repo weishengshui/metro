@@ -30,11 +30,27 @@
 	src="<%=request.getContextPath()%>/js/ueditor/editor_config.js"></script>
 	<script type="text/javascript"
 	src="<%=request.getContextPath()%>/js/ueditor/editor_all.js"></script>
+<script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery.json-2.4.js"></script>	
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/map.js"></script>
 <script type="text/javascript">
 		var baseURL = '<%=request.getContextPath()%>';
 		var editor;
 		var map = new Map();
+		var imagePreIdMap = new Map();
+		
+		function show(url,width,height){
+			width = (width> 500 ? 500: width);
+			height = (height> 700 ? 500: height);
+			$("#openIframe").attr("src",url);
+			$("#divDialog").dialog({
+				height:height,
+				width:width,
+				modal:true,
+				resizable:true,
+				title:'预览图片'
+			});
+			//parent.parent.dialog("预览图片",url,width,height);
+		}
 		
 	$(function() {
 		editor= new UE.ui.Editor();
@@ -43,6 +59,53 @@
 		    //需要ready后执行，否则可能报错
 		    editor.setContent('${merchandise.description }');
 		});
+		
+		for(var i = 0; i < 7; i++){
+			var perArray = new  Array();
+			perArray[0] = 'key'+i;
+			perArray[1] = 'image'+i;
+			perArray[2] = 'aimage'+i;
+			perArray[3] = 'divPreview'+i;
+			imagePreIdMap.put(i, perArray);
+		}
+		style="display:none";
+		for(var i = 0; i < 7; i++){
+	    	document.getElementById('divPreview'+i).style.display = "none";
+	    }
+
+    	var images = $.toJSON(${images});
+    	//alert(images);
+		images = eval('('+images+')');
+		if(images){
+			var index = 1;
+			for(var i in images){
+				var preArray = imagePreIdMap.get(index);
+				var image = images[i];
+				if(image){
+					//alert('image.imageType is '+image.imageType);
+					if(image.imageType == "OVERVIEW"){
+						preArray = imagePreIdMap.get(0);
+						//alert('image.url is ' + image.url);
+						$('#'+preArray[0]).val(i);
+						$('#'+preArray[2]).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=MERCHANDISE_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url+'\',\''+image.width+'\',\''+image.height+'\')');
+						$('#'+preArray[1]).attr('src',baseURL+'/archive/showGetthumbPic?path=MERCHANDISE_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url);
+						style="display:none";
+				    	document.getElementById(preArray[3]).style.display = "";
+				    	continue;
+					}else{
+						//alert('image.url is ' + image.url);
+						$('#'+preArray[0]).val(i);
+						$('#'+preArray[2]).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=MERCHANDISE_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url+'\',\''+image.width+'\',\''+image.height+'\')');
+						$('#'+preArray[1]).attr('src',baseURL+'/archive/showGetthumbPic?path=MERCHANDISE_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url);
+						style="display:none";
+				    	document.getElementById(preArray[3]).style.display = "";
+				    	index++;
+					}
+				}else{
+					continue;
+				}
+			}
+		}
 	});
 	
 	$(document).ready(function(){
@@ -123,77 +186,19 @@
 		});
 	}
 	
-	function check(path,spanId){ // 图片是作为整体修改的
-		//必须先添加基本图片，才能添加其它图片，确保图片信息的完整性
-		if(path.name != 'overview'){
-			var overview = document.getElementById('overview');
-			if(overview.value == ''){
-				deleteImage(path.name, path.id, spanId);
-				alert("请先添加基本图片");
-				return;
-			}
-		}
+	function check(path,spanId){
 		var filepath=path.value;
 		filepath=filepath.substring(filepath.lastIndexOf('.')+ 1,filepath.length);
 		filepath = filepath.toLocaleLowerCase();
 		if(filepath != 'jpg' && filepath != 'gif' && filepath!='jpeg' && filepath !='bmp' && filepath!='png'){
 			alert("只能上传JPG, GIF, JPEG, BMP, PNG 格式的图片");
-			deleteImage(path.name, path.id, spanId);
+			deleteInputFile(path.name, path.id, spanId);
 		}
 	}
 	
 	function openDialog(){
 		$('#dd').dialog('center');
 		$('#dd').dialog('open');
-	}
-	function previewImage(imageId){
-    	
-		if($('#'+imageId).val()==''){
-			alert("请先添加图片");
-			return;
-		} 
-		var width, height;
-		if(imageId == 'overview'){
-			width = '346px';
-			height = '346px';
-		}else{
-			width = '146px';
-			height = '146px';
-		}
-		var input = document.getElementById(imageId);
-		var imgPre = document.getElementById('perviewImage');
-		if($.browser.msie){
-			input.select();
-			var url = document.selection.createRange().text;
-			var imgDiv = document.createElement("div");
-			imgDiv.setAttribute("id",imgPre.id);
-			var parent = imgPre.parentNode;
-			parent.appendChild(imgDiv);
-			parent.removeChild(imgPre);
-		    imgDiv.style.width = width;    
-			imgDiv.style.height = height;
-		    imgDiv.style.filter="progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod = scale)";   
-		    imgDiv.filters.item("DXImageTransform.Microsoft.AlphaImageLoader").src = url;
-		}else {
-			if (input.files && input.files[0]) {
-	        	var reader = new FileReader();
-	            reader.onload = function (e) {
-	                    $('#perviewImage').attr('src', e.target.result);
-	                    $('#perviewImage').attr('width', width);
-	                    $('#perviewImage').attr('height', height);
-	                };
-	                reader.readAsDataURL(input.files[0]);
-	        } 
-		}
-		$('#imageDia').resizable({  
-		    maxWidth:20,  
-		    maxHeight:100  
-		}); 
-		$('#imageDia').dialog('center');
-		$('#imageDia').dialog('open');
-	}
-	function deleteImage(imageId){
-		$('#'+imageId).val('');
 	}
 	function selectCategory(){
 		var nodes = $('#tt2').tree('getChecked');
@@ -263,268 +268,422 @@
 			return str;
 		}
 	}
-	
-	function deleteImage(name, id, spanId){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
-		//$('#'+imageId).val('');
-		$('#'+spanId).html("<input type=file name="+name+" id="+id+" accept=image/* onchange=check(this,'"+spanId+"') />");
+	function deleteInputFile(name, id, spanId){
+		$('#'+spanId).html("<input type=file name="+ name +" id="+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
+	}
+	function uploadImage(fileId,formId, keyId, aimageId,imageId,divPreviewId){
+		if($('#'+fileId).val()==""){
+			alert("请先添加图片");
+			return ;
+		}
+		$('#'+formId).form('submit',{
+			success:function(result){
+				result = eval('('+result+')');
+				if(!result.key){
+					alert("请检查图片是否是完好的");
+					return;
+				}
+				$('#'+keyId).val(result.key);
+				var imageSessionName = result.imageSessionName;
+				initImageSession(imageSessionName);
+				$('#'+aimageId).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=MERCHANDISE_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
+				$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=MERCHANDISE_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
+				style="display:none";
+		    	document.getElementById(divPreviewId).style.display = "";
+			}
+		}); 
+	}
+	function deleteImage(keyId, divPreviewId){ 
+		$.ajax({
+			url:baseURL+'/archive/deleteImage',
+			data:'imageSessionName='+$('#imageSessionName_dataForm').val()+'&key='+$('#'+keyId).val(),
+			dataType:'json',
+			async:false,
+			success:function(data){
+			}
+		});
+		style="display:none";
+    	document.getElementById(divPreviewId).style.display = "none";
+	}
+	function initImageSession(imageSessionName){
+		$('#imageSessionName_dataForm').val(imageSessionName);
+		$('#imageSessionName_image0').val(imageSessionName);
+		$('#imageSessionName_image1').val(imageSessionName);		
+		$('#imageSessionName_image2').val(imageSessionName);
+		$('#imageSessionName_image3').val(imageSessionName);
+		$('#imageSessionName_image4').val(imageSessionName);
+		$('#imageSessionName_image5').val(imageSessionName);
+		$('#imageSessionName_image6').val(imageSessionName);
 	}
 </script>
 
 </head>
 <body>
-	<form action="create" method="post" id="fm" enctype="multipart/form-data"> 
-		<table border="0">
-			<tr>
-				<td>
-					<fieldset style="font-size: 14px;width:1100px;height:auto;">
-						<legend style="color: blue;">商品信息</legend>
-							<table border="0">
-								<tr>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="120px">商品编号：</td>
-									<td width="200px" align="left">
-										<input name="id" type="hidden" value="${merchandise.id }">
-										<input id="code" name="code" value="${merchandise.code }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" readonly="readonly"/> 
-									</td>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="80px">商品名称：</td>
-									<td width="200px" align="left">
-										<input id="name" name="name" value="${merchandise.name }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"> 
-									</td>
-									<td></td>
-								</tr>
-								<tr>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="120px">型号：</td>
-									<td width="200px" align="left">
-										<input id="model" name="model" value="${merchandise.model }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" readonly="readonly"> 
-									</td>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="80px">采购价：</td>
-									<td width="200px" align="left">
-										<input type="hidden" name="parent.id" id="parentId"> 
-										<input id="purchasePrice" name="purchasePrice" value="${merchandise.purchasePrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2,required:true"> 
-									</td>
-									<td></td>
-								</tr>
-								<tr>
-									<td width="20px"><span style="color: red;">*</span></td>
-									<td width="120px">商品介绍：</td>
-									<td align="left" colspan="5">
-										<textarea id="description"></textarea>
-										<input type="hidden" name="description" id="description2">
-									</td>
-								</tr>
-							</table>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<fieldset style="font-size: 14px;width:1100px;;height:auto;">
-						<legend style="color: blue;">售卖形式</legend>
-						<c:choose>
-							<c:when test="${(!empty catalogs) && (fn:length(catalogs) > 0)}">
+	<div class="easyui-tabs" style="">
+	    <div title="商品基本信息" style="padding:20px;">
+			<form action="create" method="post" id="fm"> 
+				<table border="0">
+					<tr>
+						<td>
+							<fieldset style="font-size: 14px;width:1100px;height:auto;">
+								<legend style="color: blue;">商品信息</legend>
+									<table border="0">
+										<tr>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="120px">商品编号：</td>
+											<td width="200px" align="left">
+												<input name="id" type="hidden" value="${merchandise.id }">
+												<input type="hidden" name="imageSessionName" id="imageSessionName_dataForm" value="${imageSessionName }" />
+												<input id="code" name="code" value="${merchandise.code }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" readonly="readonly"/> 
+											</td>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="80px">商品名称：</td>
+											<td width="200px" align="left">
+												<input id="name" name="name" value="${merchandise.name }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"> 
+											</td>
+											<td></td>
+										</tr>
+										<tr>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="120px">型号：</td>
+											<td width="200px" align="left">
+												<input id="model" name="model" value="${merchandise.model }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" readonly="readonly"> 
+											</td>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="80px">采购价：</td>
+											<td width="200px" align="left">
+												<input type="hidden" name="parent.id" id="parentId"> 
+												<input id="purchasePrice" name="purchasePrice" value="${merchandise.purchasePrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2,required:true"> 
+											</td>
+											<td></td>
+										</tr>
+										<tr>
+											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="120px">商品介绍：</td>
+											<td align="left" colspan="5">
+												<textarea id="description"></textarea>
+												<input type="hidden" name="description" id="description2">
+											</td>
+										</tr>
+									</table>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<fieldset style="font-size: 14px;width:1100px;;height:auto;">
+								<legend style="color: blue;">售卖形式</legend>
+								<c:choose>
+									<c:when test="${(!empty catalogs) && (fn:length(catalogs) > 0)}">
+										<table border="0">
+											<c:if test="${fn:length(catalogs) == 2 }">
+												<c:forEach items="${catalogs }" var="catalog">
+													<c:choose>
+														<c:when test="${catalog.unitId =='0' }">
+															<tr>
+																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
+																<td width="80px">正常售卖：</td>
+																<td width="200px">
+																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																</td>
+															</tr>
+														</c:when>
+														<c:otherwise>
+															<tr>
+																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
+																<td width="80px">积分兑换：</td>
+																<td width="200px">
+																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																</td>
+															</tr>			
+														</c:otherwise>
+													</c:choose>										
+												</c:forEach>
+											</c:if>
+											<c:if test="${fn:length(catalogs) == 1 }">
+												<c:forEach items="${catalogs }" var="catalog">
+													<c:choose>
+														<c:when test="${catalog.unitId =='0' }">
+															<tr>
+																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
+																<td width="80px">正常售卖：</td>
+																<td width="200px">
+																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																</td>
+															</tr>
+															<tr>
+																<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
+																<td width="80px">积分兑换：</td>
+																<td width="200px">
+																		<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																</td>
+															</tr>
+														</c:when>
+														<c:otherwise>
+															<tr>
+																<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
+																<td width="80px">正常售卖：</td>
+																<td width="200px">
+																		<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																</td>
+															</tr>
+															<tr>
+																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
+																<td width="80px">积分兑换：</td>
+																<td width="200px">
+																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																</td>
+															</tr>
+														</c:otherwise>
+													</c:choose>
+												</c:forEach>
+											</c:if>
+										</table>
+									</c:when>
+									<c:otherwise>
+										<table border="0">
+											<tr>
+												<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
+												<td width="80px">正常售卖：</td>
+												<td width="200px">
+														<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+												</td>
+											</tr>
+											<tr>
+												<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
+												<td width="80px">积分兑换：</td>
+												<td width="200px">
+														<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+												</td>
+											</tr>
+										</table>		
+									</c:otherwise>
+								</c:choose>
+								
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<td width="1200px">
+							<fieldset style="font-size: 14px;width:1100px;height:auto;">
+								<legend style="color: blue;">商品类别选择</legend>
 								<table border="0">
-									<c:if test="${fn:length(catalogs) == 2 }">
-										<c:forEach items="${catalogs }" var="catalog">
-											<c:choose>
-												<c:when test="${catalog.unitId =='0' }">
-													<tr>
-														<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
-														<td width="80px">正常售卖：</td>
-														<td width="200px">
-																<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-														</td>
-													</tr>
-												</c:when>
-												<c:otherwise>
-													<tr>
-														<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
-														<td width="80px">积分兑换：</td>
-														<td width="200px">
-																<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-														</td>
-													</tr>			
-												</c:otherwise>
-											</c:choose>										
-										</c:forEach>
-									</c:if>
-									<c:if test="${fn:length(catalogs) == 1 }">
-										<c:forEach items="${catalogs }" var="catalog">
-											<c:choose>
-												<c:when test="${catalog.unitId =='0' }">
-													<tr>
-														<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
-														<td width="80px">正常售卖：</td>
-														<td width="200px">
-																<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-														</td>
-													</tr>
-													<tr>
-														<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
-														<td width="80px">积分兑换：</td>
-														<td width="200px">
-																<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-														</td>
-													</tr>
-												</c:when>
-												<c:otherwise>
-													<tr>
-														<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
-														<td width="80px">正常售卖：</td>
-														<td width="200px">
-																<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-														</td>
-													</tr>
-													<tr>
-														<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
-														<td width="80px">积分兑换：</td>
-														<td width="200px">
-																<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-														</td>
-													</tr>
-												</c:otherwise>
-											</c:choose>
-										</c:forEach>
-									</c:if>
+									<tr>
+										<td width="20px"></td>
+										<td><button type="button" onclick="openDialog()">选择类别</button></td>
+									</tr>
+									<tr>
+										<td width="20px"></td>
+										<td>
+											<div id="selectCategorys">
+													
+											</div>
+										</td>
+									</tr>
 								</table>
-							</c:when>
-							<c:otherwise>
-								<table border="0">
-									<tr>
-										<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
-										<td width="80px">正常售卖：</td>
-										<td width="200px">
-												<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-										</td>
-									</tr>
-									<tr>
-										<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
-										<td width="80px">积分兑换：</td>
-										<td width="200px">
-												<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-										</td>
-									</tr>
-								</table>		
-							</c:otherwise>
-						</c:choose>
-						
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<fieldset style="font-size: 14px;width:1100px;;height:auto;">
-						<legend style="color: blue;">商品图片</legend>
-						<table border="0">
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">基本图片：</td>
-								<td width="200px" align="left">
-									<span id="span0">
-										<input type="file" name="overview" id="overview" accept="image/*" onchange="check(this,'span0')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="previewImage('overview')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('overview', 'overview', 'span0')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图一：</td>
-								<td width="200px" align="left">
-									<span id="span1">
-										<input type="file" name="others" id="image1" accept="image/*" onchange="check(this,'span1')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image1')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image1', 'image1', 'span1')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图二：</td>
-								<td width="200px" align="left">
-									<span id="span2">
-										<input type="file" name="others" id="image2" accept="image/*" onchange="check(this,'span2')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image2')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image2', 'image2', 'span2')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图三：</td>
-								<td width="200px" align="left">
-									<span id="span3">
-										<input type="file" name="others" id="image3" accept="image/*" onchange="check(this,'span3')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image3')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image3', 'image3', 'span3')">删除</button> </td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图四：</td>
-								<td width="200px" align="left">
-									<span id="span4">
-										<input type="file" name="others" id="image4" accept="image/*" onchange="check(this,'span4')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image4')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image4', 'image4', 'span4')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图五：</td>
-								<td width="200px" align="left">
-									<span id="span5">
-										<input type="file" name="others" id="image5" accept="image/*" onchange="check(this,'span5')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image5')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image5', 'image5', 'span5')">删除</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td width="80px">图六：</td>
-								<td width="200px" align="left">
-									<span id="span6">
-										<input type="file" name="others" id="image6" accept="image/*" onchange="check(this,'span6')">
-									</span>
-								</td>
-								<td width="80px">&nbsp;&nbsp;<button type="button" onclick="previewImage('image6')">预览</button> </td>
-								<td width="80px"><button type="button" onclick="deleteImage('image6', 'image6', 'span6')">删除</button></td>
-							</tr>
-						</table>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td width="1200px">
-					<fieldset style="font-size: 14px;width:1100px;height:auto;">
-						<legend style="color: blue;">商品类别选择</legend>
-						<table border="0">
-							<tr>
-								<td width="20px"></td>
-								<td><button type="button" onclick="openDialog()">选择类别</button></td>
-							</tr>
-							<tr>
-								<td width="20px"></td>
-								<td>
-									<div id="selectCategorys">
-											
-									</div>
-								</td>
-							</tr>
-						</table>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td align="center"><button type="button" onclick="doSubmit()">保存</button></td>
-			</tr>
-		</table>
-	</form>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<td align="center"><button type="button" onclick="doSubmit()">保存</button></td>
+					</tr>
+				</table>
+			</form>
+	    </div>
+	    <div title="图片维护" style="padding:20px;">
+		    <table>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm0" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">基本图片：</td>
+									<td width="200px" align="left">
+										<span id="span0">
+											<input type="file" name="overview" id="file0" accept="image/*" onchange="check(this,'span0')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file0','fm0', 'key0', 'aimage0','image0','divPreview0')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key0','divPreview0')">删除</button></td>
+									<td>
+										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+										<input type="hidden" name="key" id="key0" />
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image0" value="${imageSessionName }"/>
+										<div id="divPreview0" >
+											<a id="aimage0" href=""><img id="image0" src=""></a>
+										</div>
+									</td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm1" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片一：</td>
+									<td width="200px" align="left">
+										<span id="span1">
+											<input type="file" name="others" id="file1" accept="image/*" onchange="check(this,'span1')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file1','fm1', 'key1', 'aimage1','image1','divPreview1')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key1','divPreview1')">删除</button></td>
+									<td>
+										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+										<input type="hidden" name="key" id="key1" />
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image1" value="${imageSessionName }"/>
+										<div id="divPreview1" >
+											<a id="aimage1" href=""><img id="image1" src=""></a>
+										</div>
+									</td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm2" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片二：</td>
+									<td width="200px" align="left">
+										<span id="span2">
+											<input type="file" name="others" id="file2" accept="image/*" onchange="check(this,'span2')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file2','fm2', 'key2', 'aimage2','image2','divPreview2')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key2','divPreview2')">删除</button></td>
+									<td>
+										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+										<input type="hidden" name="key" id="key2" />
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image2" value="${imageSessionName }"/>
+										<div id="divPreview2" >
+											<a id="aimage2" href=""><img id="image2" src=""></a>
+										</div>
+									</td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm3" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片三：</td>
+									<td width="200px" align="left">
+										<span id="span3">
+											<input type="file" name="others" id="file3" accept="image/*" onchange="check(this,'span3')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file3','fm3', 'key3', 'aimage3','image3','divPreview3')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key3','divPreview3')">删除</button></td>
+									<td>
+										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+										<input type="hidden" name="key" id="key3" />
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image3" value="${imageSessionName }"/>
+										<div id="divPreview3" >
+											<a id="aimage3" href=""><img id="image3" src=""></a>
+										</div>
+									</td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm4" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片四：</td>
+									<td width="200px" align="left">
+										<span id="span4">
+											<input type="file" name="others" id="file4" accept="image/*" onchange="check(this,'span4')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file4','fm4', 'key4', 'aimage4','image4','divPreview4')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key4','divPreview4')">删除</button></td>
+									<td>
+										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+										<input type="hidden" name="key" id="key4" />
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image4" value="${imageSessionName }"/>
+										<div id="divPreview4" >
+											<a id="aimage4" href=""><img id="image4" src=""></a>
+										</div>
+									</td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm5" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片五：</td>
+									<td width="200px" align="left">
+										<span id="span5">
+											<input type="file" name="others" id="file5" accept="image/*" onchange="check(this,'span5')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file5','fm5', 'key5', 'aimage5','image5','divPreview5')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key5','divPreview5')">删除</button></td>
+									<td>
+										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+										<input type="hidden" name="key" id="key5" />
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image5"value="${imageSessionName }"/>
+										<div id="divPreview5" >
+											<a id="aimage5" href=""><img id="image5" src=""></a>
+										</div>
+									</td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    	<tr>
+		    		<td>
+		    			<form action="imageUpload" id="fm6" method="post" enctype="multipart/form-data">
+					    	<table>
+						    	<tr>
+									<td width="20px"></td>
+									<td width="80px">图片六：</td>
+									<td width="200px" align="left">
+										<span id="span6">
+											<input type="file" name="others" id="file6" accept="image/*" onchange="check(this,'span6')">
+										</span>
+									</td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file6','fm6', 'key6', 'aimage6','image6','divPreview6')">上传</button></td>
+									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key6','divPreview6')">删除</button></td>
+									<td>
+										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+										<input type="hidden" name="key" id="key6" />
+										<input type="hidden" name="imageSessionName" id="imageSessionName_image6" value="${imageSessionName }"/>
+										<div id="divPreview6" >
+											<a id="aimage6" href=""><img id="image6" src=""></a>
+										</div>
+									</td>
+								</tr>
+						    </table>
+					    </form>
+		    		</td>
+		    	</tr>
+		    </table>
+	    </div>
+	</div>
 	<div id="imageDia" class="easyui-dialog" title="图片预览" style="width:400px;height:400px;"  
         data-options="iconCls:'icon-add',resizable:true,modal:true,inline:false,closed:true">
 	        <div style="text-align:center;">
@@ -538,5 +697,8 @@
         	<button type="button" onclick="selectCategory()">确定</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="javascript:$('#dd').dialog('close');">关闭</button>
         </div>
 	</div> 
+	<div id="divDialog">
+    	<iframe scrolling="auto" id='openIframe' name="openIframe" frameborder="0"  src="" style="width:100%;height:100%;overflow: hidden;"></iframe> 
+	</div>
 </body>
 </html>

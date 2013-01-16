@@ -42,7 +42,15 @@
 							return false;
 						}
 					}
-			    	return $('#myform').form('validate');
+					var flag = false;
+					if($('#myform').form('validate')){
+						if($("#province").val()=='' || $("#city").val()=='' || $("#").val()==''){
+				    		alert("请选择区域");
+				    	}else{
+				    		flag = true;
+				    	}
+			    	}
+					return flag;
 			    },success:  function (data) { 
 			        $("#id").val(data);
 			        alert("保存成功 ");
@@ -91,7 +99,7 @@
 			  			</td>
 			  			<td><span class="red" style="margin-right:3px;">*</span>固定电话</td>
 			  			<td>
-			  				<input id="workPhone" name="workPhone" class="easyui-validatebox" data-options="validType:'phoneNumber'" value="${shop.workPhone }" class="easyui-validatebox" data-options="required:true" maxlength="12" type='text' />
+			  				<input id="workPhone" name="workPhone" class="easyui-validatebox" data-options="validType:'phoneNumber',required:true" value="${shop.workPhone }" class="easyui-validatebox" data-options="required:true" maxlength="12" type='text' />
 			  			</td>
 			  		</tr>
 			  		<tr>
@@ -102,9 +110,9 @@
 			  			</td>
 			  			<td><span class="red" style="margin-right:3px;">*</span>区域：</td>
 			  			<td>
-			  				<select name="province" style="width:60px;"></select>
-			  				<select name="city" style="width:60px;"></select>
-			  				<select name="region" style="width:60px;"></select>
+			  				<select name="province" id="province" style="width:60px;"></select>
+			  				<select name="city" id="city" style="width:60px;"></select>
+			  				<select name="region" id="region" style="width:60px;"></select>
 			  			</td>
 			  		</tr>
 			  		<tr>

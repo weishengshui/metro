@@ -1,6 +1,7 @@
 package com.chinarewards.metro.service.merchandise;
 
 import java.util.List;
+import java.util.Map;
 
 import com.chinarewards.metro.domain.category.Category;
 import com.chinarewards.metro.domain.merchandise.CatalogVo;
@@ -243,5 +244,14 @@ public interface IMerchandiseService {
 	 * @return
 	 */
 	List<CategoryVo> findCategorysByMerchandise(Merchandise merchandise);
+	
+	/**
+	 * 查询商品的图片
+	 * 
+	 * @param merchandise
+	 * @return
+	 */
+	Map<String, MerchandiseFile> findMerchandiseFIlesByMerchandise(
+			Merchandise merchandise);
 	
 }

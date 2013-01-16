@@ -16,6 +16,7 @@
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/PCASClass.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/constant.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery.json-2.4.js"></script>
+<script type="text/javascript" src="<%=request.getContextPath()%>/js/map.js"></script>
 <style type="text/css">
 	fieldset table tr{height: 35px;}
 	fieldset{margin-bottom:10px;margin-left:30px;margin-top:10px;}
@@ -24,22 +25,55 @@
 </style>
 <script type="text/javascript">
 		var baseURL = '<%=request.getContextPath()%>';
+		var imagePreIdMap = new Map();
 		
 		function show(url,width,height){
-			parent.parent.dialog("预览图片",url,width,height);
+			width = (width> 500 ? 500: width);
+			height = (height> 700 ? 500: height);
+			$("#openIframe").attr("src",url);
+			$("#divDialog").dialog({
+				height:height,
+				width:width,
+				modal:true,
+				resizable:true,
+				title:'预览图片'
+			});
+			//parent.parent.dialog("预览图片",url,width,height);
 		}
 		
 		$(function(){
+			for(var i = 0; i < 1; i++){
+				var perArray = new  Array();
+				perArray[0] = 'key';
+				perArray[1] = 'image1';
+				perArray[2] = 'aimage1';
+				perArray[3] = 'divPreview';
+				imagePreIdMap.put(i, perArray);
+			}
 			style="display:none";
 	    	document.getElementById('divPreview').style.display = "none";
-	    	var logo = $.toJSON(${logo});
-	    	//alert(logo);
-			var logo = eval('('+logo+')');
-			if(logo){
-				$('#aimage1').attr('href','javascript:show(\'brand/imageShow?path=BRAND_IMAGE_DIR&contentType='+logo.mimeType+'&fileName='+logo.url+'\',\''+logo.width+'\',\''+logo.height+'\')');
-				$('#image1').attr('src','showGetthumbPic?path=BRAND_IMAGE_DIR&contentType='+logo.mimeType+'&fileName='+logo.url);
-				style="display:none";
-		    	document.getElementById('divPreview').style.display = "";
+	    	var images = $.toJSON(${images});
+	    	//alert(images);
+			images = eval('('+images+')');
+			if(images){
+				var index = 0;
+				for(var i in images){
+					var preArray = imagePreIdMap.get(index);
+					var image = images[i];
+					if(image){
+						//alert('image.url is ' + image.url);
+						$('#'+preArray[0]).val(i);
+						$('#'+preArray[2]).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=BRAND_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url+'\',\''+image.width+'\',\''+image.height+'\')');
+						$('#'+preArray[1]).attr('src',baseURL+'/archive/showGetthumbPic?path=BRAND_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url);
+						style="display:none";
+				    	document.getElementById(preArray[3]).style.display = "";
+				    	index++;
+					}else{
+						style="display:none";
+				    	document.getElementById(preArray[3]).style.display = "none";
+						break;
+					}
+				}
 			}
 		});
 		
@@ -51,20 +85,25 @@
 		}); 
 	}
 	
-	function uploadImage(){
-		if($('#logo2').val()==""){
+	function uploadImage(fileId,formId, keyId, aimageId,imageId,divPreviewId){
+		if($('#'+fileId).val()==""){
 			alert("请先添加图片");
 			return ;
 		}
-		$('#fm2').form('submit',{
+		$('#'+formId).form('submit',{
 			success:function(result){
 				result = eval('('+result+')');
+				if(!result.key){
+					alert("请检查图片是否是完好的");
+					return;
+				}
+				$('#'+keyId).val(result.key);
 				$('#imageSessionName_dataForm').val(result.imageSessionName);
 				$('#imageSessionName_imageForm').val(result.imageSessionName);
-				$('#aimage1').attr('href','javascript:show(\'brand/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
-				$('#image1').attr('src','showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
+				$('#'+aimageId).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
+				$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
 				style="display:none";
-		    	document.getElementById('divPreview').style.display = "";
+		    	document.getElementById(divPreviewId).style.display = "";
 			}
 		}); 
 	}
@@ -87,14 +126,14 @@
 		$('#dd').dialog('center');
 		$('#dd').dialog('open');
 	}
-	function deleteImage(){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
-		if($('#imageSessionName_imageForm').val() == ""){
+	function deleteImage(keyId, divPreviewId){ // 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
+		/* if($('#imageSessionName_imageForm').val() == ""){
 			alert("请先上传图片");
 			return;
-		}
+		} */
 		$.ajax({
 			url:'deleteImage',
-			data:'imageSessionName='+$('#imageSessionName_imageForm').val(),
+			data:'imageSessionName='+$('#imageSessionName_imageForm').val()+'&key='+$('#'+keyId).val(),
 			dataType:'json',
 			async:false,
 			success:function(data){
@@ -102,11 +141,12 @@
 			}
 		});
 		style="display:none";
-    	document.getElementById('divPreview').style.display = "none";
+    	document.getElementById(divPreviewId).style.display = "none";
+		//$('#span1').html("<input type=file name=logo2 id=logo2 accept=image/* onchange=check(this,'span1') />");
 	}
 	
 	function deleteInputFile(name, id, spanId){
-		$('#'+spanId).html("<input type=file name="+ name +" id=logo2"+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
+		$('#'+spanId).html("<input type=file name="+ name +" id="+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
 	}
 </script>
 
@@ -207,20 +247,20 @@
 						<td width="20px"></td>
 						<td width="80px">图片：</td>
 						<td>
-							<input type="hidden" id="imageUrl" name="imageUrl"/>
+							<input type="hidden" name="path" value="BRAND_IMAGE_BUFFER">
+							<input type="hidden" name="key" id="key" />
 							<input type="hidden" name="imageSessionName" id="imageSessionName_imageForm" value="${imageSessionName }">
 							<div id="divPreview" >
-<!-- 								<img id="imgHeadPhoto" src=""/> -->
-								<a id="aimage1" href="javascript:show('line/shopPicShow?path=${path }&fileName=${file.url }',250,270)"><img id="image1" src=""></a>
+								<a id="aimage1" href=""><img id="image1" src=""></a>
 							</div>
 						</td>
 						<td width="200px" align="left">
 							<span id="span1">
-								<input type="file" name="logo2" id="logo2" accept="image/*" onchange="check(this,'span1')">
+								<input type="file" name="file" id="file1" accept="image/*" onchange="check(this,'span1')">
 							</span>
 						</td>
-						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage()">上传</button></td>
-						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage()">删除</button></td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file1','fm2', 'key', 'aimage1','image1','divPreview')">上传</button></td>
+						<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key','divPreview')">删除</button></td>
 					</tr>
 			    </table>
 		    </form>
@@ -292,5 +332,8 @@
 			</table>
        </div>
 	</div>	
+	<div id="divDialog">
+    	<iframe scrolling="auto" id='openIframe' name="openIframe" frameborder="0"  src="" style="width:100%;height:100%;overflow: hidden;"></iframe> 
+	</div>
 </body>
 </html>

@@ -1,20 +1,26 @@
 package com.chinarewards.metro.control.archive;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.io.FileUtils;
+import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,7 +33,9 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 import com.chinarewards.metro.core.common.Constants;
+import com.chinarewards.metro.core.common.Dictionary;
 import com.chinarewards.metro.core.common.FileStore;
+import com.chinarewards.metro.core.common.FileUtil;
 import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.core.service.IFileItemService;
 import com.chinarewards.metro.domain.file.FileItem;
@@ -39,157 +47,6 @@ public class ArchiveController {
 
 	@Autowired
 	IFileItemService fileItemService;
-
-	/**
-	 * 根据图片的id展示图片
-	 * 
-	 * @param response
-	 * @param session
-	 * @param imageId
-	 *            in temp or database primary key
-	 * @param source
-	 *            temp means iamgeId from temp others from database
-	 */
-	@RequestMapping(value = "/image/show/{source}/{imageId}")
-	public void showImage(HttpServletResponse response, HttpSession session,
-			@PathVariable String imageId, @PathVariable String source) {
-
-		InputStream inputStream = null;
-		try {
-			ServletOutputStream outputStream = response.getOutputStream();
-			response.reset();
-			String contentType = null;
-
-			if (source != null && source.equals("merchandise")) { //展示商品图片
-				MerchandiseFile fileItem = fileItemService.getMerchandiseFileById(imageId);
-				if(null != fileItem){
-					inputStream = new FileInputStream(new File(Constants.MERCHANDISE_IMAGE_DIR+fileItem.getUrl()));
-					contentType = fileItem.getMimeType();
-				}
-			} else if(null != source && source.equals("brand")){ //展示品牌logo
-				FileItem fileItem = fileItemService.findFileItemById(imageId);
-				if(null != fileItem){
-					inputStream = new FileInputStream(new File(Constants.BRAND_IMAGE_DIR+fileItem.getUrl())); 
-					contentType = fileItem.getMimeType();
-				}
-			}// TODO
-			response.setContentType(contentType);
-			int n = 0;
-			if(null != inputStream){
-				while ((n = inputStream.read()) != -1) {
-					outputStream.write(n);
-				}
-			}
-		} catch (IOException e) {
-			System.err.println("IO exception happended~!" + e.getMessage());
-		} finally {
-			if (inputStream != null) {
-				try {
-					inputStream.close();
-				} catch (IOException e) {
-					inputStream = null;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Upload image files
-	 * 
-	 * @param request
-	 * @param model
-	 * @return
-	 * @throws IOException
-	 */
-	@RequestMapping(value = "/image/upload", method = { RequestMethod.POST })
-	public @ResponseBody
-	String imageUpload(HttpServletRequest req, HttpSession session, Model model)
-			throws IOException {
-
-		// 创建一个通用的多部分解析器.
-		CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver(
-				req.getSession().getServletContext());
-		// 设置编码
-		commonsMultipartResolver.setDefaultEncoding("utf-8");
-		// 判断是否有文件上传
-		MultipartHttpServletRequest request;
-		if (commonsMultipartResolver.isMultipart(req)) {
-			request = commonsMultipartResolver.resolveMultipart(req);
-		} else {
-			return "{error:'not found'}";
-		}
-		org.springframework.util.MultiValueMap<String, MultipartFile> multipartFiles = request
-				.getMultiFileMap();
-
-		System.out.println("upload size " + multipartFiles.size());
-
-		FileStore fileStore = (FileStore) session
-				.getAttribute(Constants.UPLOADED_ARCHIVES);
-		if (fileStore == null) {
-			fileStore = new FileStore();
-			session.setAttribute(Constants.UPLOADED_ARCHIVES, fileStore);
-		}
-
-		SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd");
-		String tempDir = Constants.UPLOAD_TEMP_BASE_DIR + "/"
-				+ fmt.format(new Date());
-		String fileId = "";
-
-		for (String key : multipartFiles.keySet()) {
-
-			Map<String, String> uploadedInfo = new HashMap<String, String>();
-
-			MultipartFile multipartFile = multipartFiles.getFirst(key);
-			fileId = saveInTemp(tempDir, multipartFile);
-
-			uploadedInfo.put(FileStore.UPLOADED_FILE_CONTENT_TYPE,
-					multipartFile.getContentType());
-
-			uploadedInfo.put(FileStore.UPLOADED_FILE_FILE_NAME,
-					multipartFile.getName());
-			uploadedInfo.put(FileStore.UPLOADED_FILE_ORIG_FILE_NAME,
-					multipartFile.getOriginalFilename());
-			uploadedInfo.put(FileStore.UPLOADED_FILE_ORIG_FILE_SIZE,
-					String.valueOf(multipartFile.getSize()));
-			uploadedInfo.put(FileStore.UPLOADED_FILE_PATH, tempDir + "/"
-					+ fileId);
-
-			fileStore.insert(fileId, uploadedInfo);
-			break;
-		}
-
-		return "{msg:'" + fileId + "'}";
-	}
-
-	private String getMimeType(File file) {
-		String mimetype = "";
-		if (file.exists()) {
-			// URLConnection uc = new URL("file://" +
-			// file.getAbsolutePath()).openConnection();
-			// String mimetype = uc.getContentType();
-			// MimetypesFIleTypeMap gives PNG as application/octet-stream, but
-			// it seems so does URLConnection
-			// have to make dirty workaround
-			if (getSuffix(file.getName()).equalsIgnoreCase("png")) {
-				mimetype = "image/png";
-			} else {
-				javax.activation.MimetypesFileTypeMap mtMap = new javax.activation.MimetypesFileTypeMap();
-				mimetype = mtMap.getContentType(file);
-			}
-		}
-		System.out.println("mimetype: " + mimetype);
-		return mimetype;
-	}
-
-	private String getSuffix(String filename) {
-		String suffix = "";
-		int pos = filename.lastIndexOf('.');
-		if (pos > 0 && pos < filename.length() - 1) {
-			suffix = filename.substring(pos + 1);
-		}
-		System.out.println("suffix: " + suffix);
-		return suffix;
-	}
 
 	public String saveInTemp(String tempDir, MultipartFile multipartFile)
 			throws IOException {
@@ -212,5 +69,100 @@ public class ArchiveController {
 
 	public void setFileItemService(IFileItemService fileItemService) {
 		this.fileItemService = fileItemService;
+	}
+	
+	/**
+	 * 获取展示图片
+	 * 
+	 * @param mFile
+	 * @param response
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/imageShow")
+	public void shopPicShow(String path, String fileName, String contentType,
+			HttpServletResponse response) throws Exception {
+
+		path = Dictionary.getPicPath(path);
+		if (!"".equals(path)) {
+			FileUtil.pathExist(path);
+			File file = new File(path, fileName);
+			response.setContentType(contentType);
+			response.setContentLength((int) file.length());
+			response.setHeader("Content-Disposition", "inline; filename=\""
+					+ file.getName() + "\"");
+			byte[] bbuf = new byte[1024];
+			DataInputStream in = new DataInputStream(new FileInputStream(file));
+			int bytes = 0;
+			ServletOutputStream op = response.getOutputStream();
+			while ((in != null) && ((bytes = in.read(bbuf)) != -1)) {
+				op.write(bbuf, 0, bytes);
+			}
+			in.close();
+			op.flush();
+			op.close();
+		}
+	}
+	
+	/**
+	 * 获取展示的缩略图
+	 * 
+	 * @throws Exception
+	 */
+	@RequestMapping("/showGetthumbPic")
+	public void showGetthumbPic(String path, String fileName,
+			String contentType, HttpServletResponse response) throws Exception {
+
+		path = Dictionary.getPicPath(path);
+		if (!"".equals(path)) {
+			FileUtil.pathExist(path);
+			File file = new File(path, fileName);
+			if (file.exists()) {
+				contentType = contentType.toLowerCase();
+				if (contentType.endsWith("png") || contentType.endsWith("jpeg")
+						|| contentType.endsWith("gif")
+						|| contentType.endsWith("jpg")
+						|| contentType.endsWith("bmp")) {
+					BufferedImage im = ImageIO.read(file);
+					if (im != null) {
+						BufferedImage thumb = Scalr.resize(im, 75);
+						ByteArrayOutputStream os = new ByteArrayOutputStream();
+						if (contentType.endsWith("png")) {
+							ImageIO.write(thumb, "PNG", os);
+						} else if (contentType.endsWith("jpeg")
+								|| contentType.endsWith("jpg")) {
+							ImageIO.write(thumb, "JPG", os);
+						} else if (contentType.endsWith("bmp")) {
+							ImageIO.write(thumb, "BMP", os);
+						} else {
+							ImageIO.write(thumb, "GIF", os);
+						}
+						response.setContentType(contentType);
+						ServletOutputStream srvos = response.getOutputStream();
+						response.setContentLength(os.size());
+						response.setHeader("Content-Disposition",
+								"inline; filename=\"" + file.getName() + "\"");
+						os.writeTo(srvos);
+						srvos.flush();
+						srvos.close();
+					}
+				}
+			}
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value = "/deleteImage")
+	@ResponseBody
+	public void deleteImage(HttpServletResponse response, HttpSession session,
+			String imageSessionName, String key) throws Exception {
+
+		Map<String, Object> images = (Map<String, Object>) session
+				.getAttribute(imageSessionName);
+		images.remove(key);
+
+		response.setContentType("text/html; charset=utf-8");
+		PrintWriter out = response.getWriter();
+		out.write("{msg:\'删除成功\'}");
+		out.flush();
 	}
 }

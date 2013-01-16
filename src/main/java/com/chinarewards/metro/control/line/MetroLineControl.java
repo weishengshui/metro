@@ -14,6 +14,7 @@ import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
 import org.dom4j.DocumentException;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,8 @@ import com.chinarewards.metro.service.line.ILineService;
 @Controller
 @RequestMapping("/line")
 public class MetroLineControl {
+
+	static Logger logger = Logger.getLogger(MetroLineControl.class.getName());
 
 	@Autowired
 	private ILineService lineService;
@@ -175,6 +178,22 @@ public class MetroLineControl {
 		lineService.updateMetroSite(site, lineinserted, linedeleted, lineupdated, shopinserted, shopdeleted, shopupdated);
 	}
 	/**
+	 * 判断站台名称是否存在
+	 * @param name
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/findSiteByName")
+	public Integer findSiteByName(String name){
+		MetroSite site = lineService.findSiteByName(name);
+		if(site == null){
+			return 0;
+		}else{
+			return 1;
+		}
+	}
+	
+	/**
 	 * 
 	 */
 	@RequestMapping("/findLineBySiteId")
@@ -275,7 +294,6 @@ public class MetroLineControl {
 		String fileName = mFile.getOriginalFilename();
 		String suffix = fileName.substring(fileName.length()-4,fileName.length());
 		String fileNewName = UUIDUtil.generate() + suffix;
-		FileUtil.saveFile(mFile.getInputStream(), Constants.SHOP_IMG, fileNewName);
 		ShopFile shopFile = new ShopFile();
 		FileItem fileItem = new FileItem();
 		fileItem.setCreatedAt(DateTools.dateToHour());
@@ -288,6 +306,7 @@ public class MetroLineControl {
 		fileItem.setLastModifiedBy(UserContext.getUserId());
 		shopFile.setShop(shop);
 		lineService.saveShopFile(fileItem,shopFile);
+		FileUtil.saveFile(mFile.getInputStream(), Constants.SHOP_IMG, fileNewName);
 		FileUtil.outPic(mFile, "SHOP_IMG", fileNewName, response);
 	}
 	

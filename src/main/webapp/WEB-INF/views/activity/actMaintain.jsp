@@ -12,16 +12,7 @@
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery/locale/easyui-lang-zh_CN.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/common.js"></script>
 <script type="text/javascript">
-		function edit(id,name){
-			//parent.addTab('维护'+name+'信息','member/updateMemberPage?id='+id);
-		}
-
 		
-		function getBranData(rowIndex,rowData){
-			//alert(rowData.activityId);
-			
-			return rowData.activityId;
-		}
 		function getId(){
 			return $("#actId").val();
 		}
@@ -32,6 +23,7 @@
 		
 		
 		$('#saveActivity').click(function(){
+			var name = $("input[name='activityName']").val();
 			var startDate = $("input[name='startDate']").val();
 			var endDate = $("input[name='endDate']").val();
 			
@@ -44,13 +36,33 @@
 				alert("请选择结束时间！");
 				return false ;
 			}
+			var tag = false ;
+			$.ajax({
+	            url:'checkActNameAndTime',
+	            type:'post',
+	            async: false,
+	            data:{
+	            	name:name,
+	            	dTime:startDate
+	            },
+	            success:function(data){
+	            	if(data == 1){
+	            		tag = true ;
+	            	}
+	            }
+	        });
 			
+			if(tag){
+				alert("活动名称和开始日期不能相同！");
+				return false ;
+			}
 			
 			$('#activityForm').form('submit', {
-			    url:'saveActivity',  
+			    url:'saveActivity',
 			    success:function(data){
 		    		$("#id").val(data);
 			    	$("#actId").val(data);
+			    	$("#hid").val(data);
 		    		$('#table1').datagrid({
 		    			queryParams: {
 		    				id: data
@@ -304,17 +316,18 @@
 </script>
 </head>
 <body>
-        <%
-		   Token t=Token.getInstance();
-		   String token=t.getToken(request);
-		%>
-		<input type="hidden" value="" name="actId" id="actId" />
+
+	<input type="hidden" value="" name="actId" id="actId" />
 
 	<div id="tabAct" class="easyui-tabs" style="width:650px;height:550px">  
         <div title="活动信息新增" style="padding:10px">  
             <form id="activityForm" method="post" enctype="multipart/form-data">
             <fieldset>
 			<legend style="color: blue;">活动基本信息</legend>
+			<%
+			   Token t=Token.getInstance();
+			   String token=t.getToken(request);
+			%>
 		     <table style="width: 600px;" >
 		        	<tr>
 		        	<input type="hidden" value="" name="id" id="id" />
@@ -391,6 +404,7 @@
 						<tr>
 							<td>品牌名称：</td>
 							<td><input id="name" name="name" type="text"/></td>
+							<input id="hid" name="id" type="hidden"/>
 							<td>
 								<a id="searchbtn1" href="javascript:void(0)"  class="easyui-linkbutton" data-options="iconCls:'icon-search'">查询</a>
 							</td>
@@ -419,7 +433,7 @@
         <div title="POS机维护" style="padding:10px">  
 
 			<!-- 显示列表Table -->
-			<table style="height:400px" id="table3"  title="所绑定活动的Pos机信息" style="" class="easyui-datagrid" data-options="url:'query_posBands',queryParams:{id:$('#id').val()},fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
+			<table style="height:400px" id="table3"  title="所绑定活动的Pos机信息" style="" class="easyui-datagrid" data-options="url:'query_posBands',fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
 				rownumbers:true,pageList:pageList,singleSelect:false">
 			    <thead>  
 			        <tr>  
@@ -436,7 +450,7 @@
         </div>  
     </div> 
 	<div id="win" class="easyui-window" title="选择参与活动的品牌" style="width:600px;height:350px"  
-	        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false,">  
+	        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false">  
 	    	<form id="searchForm2" method="post" >
 				<fieldset>
 					<legend style="color: blue;">查询条件</legend>
@@ -457,7 +471,7 @@
 
 			<!-- 显示列表Table -->
 			<table id="table2" style="height:200px" idField="name" style="" class="easyui-datagrid" data-options="url:'findBrandNotBandAct',fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
-				rownumbers:true,pageList:pageList,singleSelect:false,onDblClickRow:function(rowIndex,rowData){edit(rowData.id,rowData.name);}">
+				rownumbers:true,pageList:pageList,singleSelect:false">
 			    <thead>  
 			        <tr>  
 			        	<th field="ck" checkbox="true"></th>
@@ -474,7 +488,7 @@
 	
 	</table>
 	<div id="winPos" class="easyui-window" title="添加绑定的POS机" style="width:250px;height:140px"  
-        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false,"> 
+        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false"> 
         <br>
         <form id="posForm">
         	<table>

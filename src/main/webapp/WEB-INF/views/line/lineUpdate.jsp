@@ -220,12 +220,18 @@
             	$('#dg').datagrid('cancelEdit', rowIndex).datagrid('deleteRow', rowIndex);
             }
             if(field == 'orderNo'){
-            	$('#dg').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
-            	accept();
+            	var rows = $('#dg').datagrid('getRows');
+            	if(rows.length == 1){
+            		$('#dg').datagrid('selectRow', 0).datagrid('beginEdit', 0);
+            	}else{
+            		$('#dg').datagrid('endEdit', 0);
+            		$('#dg').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
+            		accept();
+            	}
             	editIndex = rowIndex;
             }
         }
-        function cellStyler(value,row,index){  
+        function cellStyler(value,row,index){
            return 'background:url(<%=request.getContextPath()%>/js/jquery/themes/icons/cancel.png) no-repeat center;cursor:pointer';  
         } 
     </script>  

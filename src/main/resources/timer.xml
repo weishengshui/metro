@@ -69,8 +69,29 @@
 	            <ref bean="cronTrigger" />
 	            <ref bean="simpleTrigger" />
 	            <ref bean="smsTrigger" />
+	            <ref bean="depositTrigger" />
 	        </list>
 	    </property>
 	</bean>
+    
+    <!-- 定时积分生效 START -->
+    
+    <bean id="depositTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+	    <property name="jobDetail" ref="depositJob" />
+	    <property name="cronExpression" value="59 59 23 * * ?" />
+	</bean>	
+	
+	<bean id="depositJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+  		<property name="targetObject" ref="depositClass" />
+		<property name="targetMethod" value="doJob" />
+  		<property name="concurrent" value="false" />
+	</bean>
+	
+	<bean id="depositClass" class="com.chinarewards.metro.core.timer.DepositJob">
+		<property name="jdbcDaoSupport" ref="jdbcDaoSupport" />
+		<property name="accountService" ref="accountService" />
+	</bean>
+	
+	<!-- 定时积分生效 END -->
     	
 </beans>

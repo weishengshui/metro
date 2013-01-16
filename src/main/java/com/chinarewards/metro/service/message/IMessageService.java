@@ -108,4 +108,13 @@ public interface IMessageService {
 	 */
 	void updateMessageTaskEndtime(String taskid,Date endTime);
 	
+	
+	/**
+	 * 检查号码（1-重复；2-号码不足11位）
+	 * @param sTelephone
+	 * @param listTelephone
+	 * @return
+	 */
+	int checkTelephone(String sTelephone,List<MessageTelephone> listTelephone);
+	
 }

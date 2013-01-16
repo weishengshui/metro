@@ -715,5 +715,10 @@ public class MemberService implements IMemberService {
 				params, page);
 		return list;
 	}
-
+	
+	@Override
+	public Member findMemberByAccountId(String accountId) {
+		String hql = "FROM Member WHERE account = ?";
+		return hbDaoSupport.findTByHQL(hql, accountId);
+	}
 }

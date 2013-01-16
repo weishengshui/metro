@@ -43,8 +43,9 @@ public class MessageTask implements Serializable{
 	private int successAmount;
 	@Transient	
 	private int failureAmount;
-	private int notSentAmount;//这两个有什么区别
-	
+	@Transient	
+	private int notSentAmount;
+	@Transient	
 	private File telephoneFile;
 	
 	

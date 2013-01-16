@@ -60,8 +60,21 @@
 			var lineJson = JSON.stringify($('#dg').datagrid('getChanges', "inserted"));
 			var shopJson = JSON.stringify($('#dg1').datagrid('getChanges', "inserted"));
 	        var param = $("#siteForm").serialize();
-	        if(lineJson=='[]'){lineJson==''};
+	        if(lineJson=='[]'){alert('请选择线路');return;};
 	        if(shopJson=='[]'){shopJson = '';};
+	        var flag = false;
+	        $.ajax({
+				url:'findSiteByName',
+				async: false,
+				type :'post',
+				data:'name='+$("#name").val(),
+				success:function(data){
+					if(data == 1){
+						flag = true;
+					}
+				}
+			});
+	        if(flag){alert("站台名称已经存在");return false;}
 	        $.post("saveSite?"+param+"&lineJson="+lineJson+"&shopJson="+shopJson, function(rsp) {
 	           	$('#dg').datagrid('acceptChanges');
 	           	alert('保存成功!');
@@ -100,7 +113,7 @@
 	  			<td><span class="red">*</span></td>
 	  			<td>站台名称：</td>
 	  			<td>
-	  				<input id="name" type='text' name='name' style="width:200px" maxlength="100" 
+	  				<input id="name" type='text' name='name' id="name" style="width:200px" maxlength="100" 
 				class="easyui-validatebox" data-options="required:true" />
 	  			</td>
 	  		</tr>
@@ -261,8 +274,14 @@
             	$('#dg').datagrid('cancelEdit', rowIndex).datagrid('deleteRow', rowIndex);
             }
             if(field == 'orderNo'){
-            	$('#dg').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
-            	accept();
+            	var rows = $('#dg').datagrid('getRows');
+            	if(rows.length == 1){
+            		$('#dg').datagrid('selectRow', 0).datagrid('beginEdit', 0);
+            	}else{
+            		$('#dg').datagrid('endEdit', 0);
+            		$('#dg').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
+            		accept();
+            	}
             	editIndex = rowIndex;
             }
         }
@@ -285,10 +304,10 @@
           	$('#dg1').datagrid('selectRow', editIndex1).datagrid('beginEdit', editIndex1);
           	accept1(); 
         }
-        function accept1(){  
-        	var ed = $('#dg1').datagrid('getEditor', {index:editIndex1,field:'num'});
+        function accept1(){
+        	var ed = $('#dg1').datagrid('getEditor', {index:editIndex1,field:'orderNo'});
         	if(ed==null){return;}
-            $('#dg1').datagrid('getRows')[editIndex1]['num'] = '';
+            $('#dg1').datagrid('getRows')[editIndex1]['orderNo'] = '';
             $('#dg1').datagrid('endEdit', editIndex1);
         }
         function deleteAll1(){
@@ -303,9 +322,15 @@
             if(field == 'op'){
             	$('#dg1').datagrid('cancelEdit', rowIndex).datagrid('deleteRow', rowIndex);
             }
-            if(field == 'num'){
-            	$('#dg1').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
-            	accept1();
+            if(field == 'orderNo'){
+            	var rows = $('#dg1').datagrid('getRows');
+            	if(rows.length == 1){
+            		$('#dg1').datagrid('selectRow', 0).datagrid('beginEdit', 0);
+            	}else{
+            		$('#dg1').datagrid('endEdit', 0);
+            		$('#dg1').datagrid('selectRow', rowIndex).datagrid('beginEdit', rowIndex);
+            		accept1();
+            	}
             	editIndex1 = rowIndex;
             }
         }

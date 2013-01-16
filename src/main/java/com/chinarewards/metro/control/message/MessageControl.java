@@ -24,7 +24,11 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.quartz.CronTrigger;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.impl.StdScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -43,6 +47,7 @@ import com.chinarewards.metro.core.common.FileUtil;
 import com.chinarewards.metro.core.common.Page;
 import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.core.dynamicquartz.CustomJob;
+import com.chinarewards.metro.core.dynamicquartz.SendMessageJob;
 import com.chinarewards.metro.core.dynamicquartz.QuartzManager;
 import com.chinarewards.metro.core.dynamicquartz.QuartzSendMessage;
 import com.chinarewards.metro.domain.message.MessageTask;
@@ -76,7 +81,7 @@ public class MessageControl {
 	
 	@RequestMapping(value = "/addSave")
 	@ResponseBody
-	public void addSave(@RequestParam("telephoneFile") MultipartFile mFile,String taskName,HttpServletResponse response,String content,String planSendDate,String sendType)throws Exception{
+	public void addSave(@RequestParam("telephoneFile") MultipartFile mFile,String taskName,HttpServletResponse response,String content,String planSendDate,String sendType) throws IOException{
 		response.setContentType("text/html; charset=utf-8");
 		PrintWriter out = response.getWriter();
 		MessageTask mTask = new MessageTask();
@@ -100,6 +105,7 @@ public class MessageControl {
 		String encoding = "utf-8"; 
 		String suffix = getSuffix(fileName);
 		fileName = UUIDUtil.generate() + suffix;
+		int isQualified=0;
 		
 		FileUtil.saveFile(mFile.getInputStream(), Constants.MESSAGETASK_CSV_DIR, fileName);
 		file=new File(Constants.MESSAGETASK_CSV_DIR, fileName); 
@@ -112,12 +118,13 @@ public class MessageControl {
 	            while ((lineTXT = bufferedReader.readLine()) != null) {  
 	            	telephones+=lineTXT.toString().trim()+",";
 	           }  
+	           isQualified=messageservice.checkTelephone(telephones, null);
 	             read.close();  
 	        }else{  
 	            System.out.println("找不到指定的文件！");  
 	        }
        
-		
+		if(isQualified==0){
 			MessageTask mt=null;
 			if (mTask!=null) { // insert
 				mt=messageservice.add(mTask, telephones);
@@ -126,7 +133,7 @@ public class MessageControl {
 			}
 			//立即发送短信，用线程池的方式
 			if("1".equals(sendType)&&mt!=null){
-				 messageservice.updateMessageTaskSatats(mt.getTaskId(), Dictionary.TASK_CRATING);
+				 messageservice.updateMessageTaskSatats(mt.getTaskId(), Dictionary.TASK_NOTEXECUTE);
 				 taskExecutor.execute(new SendMessage(telephones,mTask.getContent(),Constants.TASK_PRIORITY,mt.getTaskId(),messageservice,communicationservice));  
 			}
 			
@@ -137,175 +144,39 @@ public class MessageControl {
 				    CustomJob job = new CustomJob();
 				    List<MessageTelephone> mtplist=messageservice.selectMTelByTaskidStates(mt.getTaskId(),0);
 				    
-				    
 				    String[] str=time.split(" ");
 				    String[] str1=str[0].split("-");
 				    String[] str2=str[1].split(":");
-				    job.setJobId("sendmessage");
-					job.setJobGroup("sendmessage_group");
-				 	job.setCronExpression(Integer.valueOf(str2[2])+" "+Integer.valueOf(str2[1])+" "+Integer.valueOf(str2[0])+" "+Integer.valueOf(str1[2])+" "+Integer.valueOf(str1[1])+" ? "+Integer.valueOf(str1[0]));
-					System.out.println(job.getCronExpression());
-					job.setStateFulljobExecuteClass(QuartzSendMessage.class);
-//					
-//					JobDataMap paramsMap = new JobDataMap();
-//					ArrayList<String> paramList = new ArrayList<String>();
-//					paramList.add(0,mt.getTaskId());
-//					paramList.add(1,mTask.getContent());
-//					paramList.add("three");
-//					paramsMap.put("p2",paramList);
-					JobDetail jobDetail = null;
-					jobDetail = new JobDetail(job.getJobId(),
-								job.getJobGroup(),
-								job.getStateFulljobExecuteClass());
-			//		jobDetail.setJobDataMap(paramsMap);
-					jobDetail.getJobDataMap().put("taskid", mt.getTaskId());
+				    String timer=Integer.valueOf(str2[2])+" "+Integer.valueOf(str2[1])+" "+Integer.valueOf(str2[0])+" "+Integer.valueOf(str1[2])+" "+Integer.valueOf(str1[1])+" ? "+Integer.valueOf(str1[0]);
+			
+					JobDetail jobDetail = new JobDetail();  
+//					jobDetail = new JobDetail(job.getJobId(),
+//							job.getJobGroup(),
+//							job.getStateFulljobExecuteClass());
+		            jobDetail.setName(mt.getTaskId());  
+		        	jobDetail.getJobDataMap().put("taskid", mt.getTaskId());
 					jobDetail.getJobDataMap().put("content", mTask.getContent());
 					jobDetail.getJobDataMap().put("telephonelist", mtplist);
 					jobDetail.getJobDataMap().put("priority", Constants.TASK_PRIORITY);
-					
-					QuartzManager.enableCronSchedule(job, true,jobDetail);
-				
+		        	QuartzSendMessage sendmessage = new QuartzSendMessage(); 
+		        	sendmessage.setCommunicationService(communicationservice);
+		        	sendmessage.setMessageservice(messageservice);
+		        	sendmessage.setTaskExecutor(taskExecutor);
+		        
+		            jobDetail.getJobDataMap().put("sendmessage", sendmessage);  
+		            jobDetail.setJobClass(SendMessageJob.class);  
+		            QuartzManager.enableCronSchedule(jobDetail, mt.getTaskId(),timer);
+		            messageservice.updateMessageTaskSatats(mt.getTaskId(), Dictionary.TASK_NOTEXECUTE);
 			}
 			
-			
+		}else if(isQualified==1){
+			out.println(CommonUtil.toJson(new AjaxResponseCommonVo("号码有重复，请检查号码！")));
+		}else if(isQualified==2){
+			out.println(CommonUtil.toJson(new AjaxResponseCommonVo("号码不足11位，请检查号码！")));
+		}
 			out.flush();
-		
 	}
 	
-	/**
-	 * 添加任务信息
-	 * @param session
-	 * @param request
-	 * @param response
-	 * @param mTask
-	 * @param sendType
-	 * @param model
-	 * @throws IOException
-	 */
-//	@RequestMapping("/addSave")
-//	@ResponseBody
-//	public void addSave(@RequestParam("telephoneFile") MultipartFile mFile,MessageTask mTask ,
-//			HttpServletRequest request, HttpServletResponse response,String sendType)
-//			throws IOException {
-//		response.setContentType("text/html; charset=utf-8");
-//		PrintWriter out = response.getWriter();
-//		//MessageTask mTask = new MessageTask();
-//		
-//		DiskFileItemFactory factory = new DiskFileItemFactory();
-//		ServletFileUpload upload = new ServletFileUpload(factory);
-//
-//		String telephones="";
-//		try{
-//		  List<FileItem> items = upload.parseRequest(request);
-//			for (FileItem item : items) {
-//				if (item.isFormField()) {
-//					if (item.getFieldName().equals("taskName")
-//							&& !item.getString("UTF-8").isEmpty()) {
-//						mTask.setTaskName(item.getString("UTF-8"));
-//					}
-//					if (item.getFieldName().equals("content")) {
-//						mTask.setContent(item.getString("UTF-8"));
-//					}
-//					if (item.getFieldName().equals("planSendDate")&&!"".equals(item.getString("UTF-8"))) {
-//						mTask.setPlanSendTime(DateTools.stringToDate(item.getString("UTF-8")));
-//					}
-//					if (item.getFieldName().equals("sendType")) {
-//						sendType=item.getString("UTF-8");
-//					}
-//				}
-//			}
-//		if("1".equals(sendType)){
-//			mTask.setPlanSendTime(null);
-//			mTask.setActualSendTime(DateTools.dateToHour());
-//		}
-//		String encoding = "utf-8"; 
-//		File uploadPath = new File(Constants.MESSAGETASK_CSV_DIR);
-//		if (!uploadPath.exists()) {
-//			uploadPath.mkdirs();
-//		}
-//		File file=null;
-//		for (FileItem item : items) {
-//			if (!item.isFormField()) {
-//				if (null != item.getName() && !item.getName().isEmpty()) {
-//					
-//					String suffix = getSuffix(item.getName());
-//					String fileName = UUIDUtil.generate() + suffix;
-//					file=new File(uploadPath, fileName); 
-//					item.write(file);
-//					item.delete(); // 删除临时文件
-//				}
-//			}
-//		}
-//			//File file = new File("d:/csvfile.csv");
-//			//读取csv文件
-//			if (file.isFile() && file.exists()) {  
-//	            InputStreamReader read = new InputStreamReader(  
-//	                    new FileInputStream(file), encoding);  
-//	            BufferedReader bufferedReader = new BufferedReader(read);  
-//	            String lineTXT = null;  
-//	            while ((lineTXT = bufferedReader.readLine()) != null) {  
-//	            	telephones+=lineTXT.toString().trim()+",";
-//	           }  
-//	             read.close();  
-//	        }else{  
-//	            System.out.println("找不到指定的文件！");  
-//	        }
-//        } catch (Exception e) {  
-//           System.out.println("没有上传文件");         
-//       }    
-//        MessageTask mt=null;
-//		if (mTask!=null) { // insert
-//			mt=messageservice.add(mTask, telephones);
-//			out.println(CommonUtil.toJson(new AjaxResponseCommonVo(
-//					"添加成功")));
-//		}
-//		//立即发送短信，用线程池的方式
-//		if("1".equals(sendType)&&mt!=null){
-//			 messageservice.updateMessageTaskSatats(mt.getTaskId(), Dictionary.TASK_CRATING);
-//			 taskExecutor.execute(new SendMessage(telephones,mTask.getContent(),Constants.TASK_PRIORITY,mt.getTaskId(),messageservice,communicationservice));  
-//		}
-//		
-//		//定时发送
-//		if("2".equals(sendType)&&mTask.getPlanSendTime()!=null){
-//			    CustomJob job = new CustomJob();
-//			    String time= DateTools.getDateFormat((Timestamp)mTask.getPlanSendTime(),"yyyy-mm-dd hh:mm:ss");
-//			    List<MessageTelephone> mtplist=messageservice.selectMTelByTaskidStates(mt.getTaskId(),0);
-//			    
-//			    
-//			    String[] str=time.split(" ");
-//			    String[] str1=str[0].split("-");
-//			    String[] str2=str[1].split(":");
-//			    
-//			    
-//			    job.setJobId("sendmessage");
-//				job.setJobGroup("sendmessage_group");
-//			 	job.setCronExpression(str2[2]+" "+str2[1]+" "+str2[0]+" "+str1[2]+" "+str1[1]+" ? "+str1[0]);
-//				job.setStateFulljobExecuteClass(QuartzSendMessage.class);
-//				
-////				JobDataMap paramsMap = new JobDataMap();
-////				ArrayList<String> paramList = new ArrayList<String>();
-////				paramList.add(0,mt.getTaskId());
-////				paramList.add(1,mTask.getContent());
-////				paramList.add("three");
-////				paramsMap.put("p2",paramList);
-//				JobDetail jobDetail = null;
-//				jobDetail = new JobDetail(job.getJobId(),
-//							job.getJobGroup(),
-//							job.getStateFulljobExecuteClass());
-//				//jobDetail.setJobDataMap(paramsMap);
-//				jobDetail.getJobDataMap().put("taskid", mt.getTaskId());
-//				jobDetail.getJobDataMap().put("content", mTask.getContent());
-//				jobDetail.getJobDataMap().put("telephonelist", mtplist);
-//				jobDetail.getJobDataMap().put("priority", Constants.TASK_PRIORITY);
-//			//	jobDetail.getJobDataMap().put("messageservice", messageservice);
-//				
-//				QuartzManager.enableCronSchedule(job, true,jobDetail);
-//			
-//		}
-//		
-//		
-//		out.flush();
-//	}
 	@RequestMapping("/list")
 	public String list(Model model)throws Exception{
 		model.addAttribute("status", Dictionary.findMessageTaskStatus());
@@ -339,7 +210,8 @@ public class MessageControl {
 	public String viewTask(Model model,String taskid){
 //		MessageTask task= messageservice.viewMessageTask(taskid);
 		model.addAttribute("task", messageservice.viewMessageTask(taskid));
-		model.addAttribute("states",1);
+		//model.addAttribute("states",1);
+		model.addAttribute("statusJson", CommonUtil.toJson(Dictionary.findMessageTaskStatus()));
 		return "message/viewTask";
 	}
 	/**
@@ -359,7 +231,7 @@ public class MessageControl {
 	@ResponseBody
 	@RequestMapping("/restartTask")
 	public void restartTask(String taskid){
-		 messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_CRATING);
+		 messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_EXECUTING);
 		 MessageTask mTask=messageservice.viewMessageTask(taskid);
 		 List<MessageTelephone> mtplist=messageservice.selectMTelByTaskidStates(taskid,0);
 		 if(!StringUtil.isEmptyString(mTask.getContent())&&mtplist.size()!=0&&mtplist!=null){
@@ -386,7 +258,7 @@ public class MessageControl {
 	@ResponseBody
 	@RequestMapping("/deleteTask")
     public void deleteTask(String taskid){
-		 messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_CANCEL);
+		 messageservice.deleteMessageTask(taskid);
     }
 	
 	
@@ -449,13 +321,12 @@ public class MessageControl {
 		MessageTask mt=new MessageTask();
 		mt=messageservice.viewMessageTask(taskid);
 		if(alllist!=null){
-			 messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_CRATING);
+			 messageservice.updateMessageTaskSatats(taskid, Dictionary.TASK_NOTEXECUTE);
 			 taskExecutor.execute(new SendMessage(alllist,mt.getContent(),Constants.TASK_PRIORITY,taskid,messageservice,communicationservice));  
 		}
 		out.println(CommonUtil.toJson(new AjaxResponseCommonVo("正在发送中...")));
 		out.flush();
 	}
-
 	
 	
 	private String  getSuffix(String fileName) {

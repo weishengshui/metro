@@ -32,6 +32,7 @@ import com.chinarewards.metro.core.common.Constants;
 import com.chinarewards.metro.core.common.Page;
 import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.domain.activity.ActivityInfo;
+import com.chinarewards.metro.domain.activity.Token;
 import com.chinarewards.metro.domain.brand.Brand;
 import com.chinarewards.metro.domain.pos.PosBind;
 import com.chinarewards.metro.domain.shop.DiscountNumber;
@@ -58,20 +59,40 @@ public class ActivityControl {
 	/**
 	 * 分页查询活动信息
 	 */
+//	@RequestMapping(value = "/activity/findActivities")
+//	public Map<String, Object> findActivities(String activityName,String startDate,String endDate, Page page)
+//			throws Exception {
+//		Map<String, Object> map = new HashMap<String, Object>();
+//		try {
+//			map.put("rows", activityService.findActivity(activityName,startDate,endDate, page));
+//			map.put("total", page.getTotalRows());
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return map;
+//	}
+	
+	/**
+	 * 分页查询活动信息
+	 */
 	@RequestMapping(value = "/activity/findActivities")
-	public Map<String, Object> findActivities(ActivityInfo activity, Page page)
+	public String findActivities(Integer page, Integer rows, Model model,String activityName,String startDate,String endDate)
 			throws Exception {
-		Map<String, Object> map = new HashMap<String, Object>();
-		try {
-			map.put("rows", activityService.findActivity(activity, page));
-			map.put("total", page.getTotalRows());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return map;
+		Page paginationDetail = new Page();
+		rows = (rows == null) ? Constants.PERPAGE_SIZE : rows;
+		page = page == null ? 1 : page;
+		paginationDetail.setPage(page);
+		paginationDetail.setRows(rows);
+		
+		List<ActivityInfo> list = activityService.findActivity(activityName,startDate,endDate, paginationDetail);
+		model.addAttribute("rows", list);
+		model.addAttribute("total", paginationDetail.getTotalRows());
+		model.addAttribute("page", page);
+		
+		return "activity/activityList";
 	}
-
+	
 	/**
 	 * 查询参加活动的品牌信息
 	 */
@@ -249,14 +270,14 @@ public class ActivityControl {
 	 * 查询单个活动所绑定的品牌
 	 */
 	@RequestMapping(value = "/activity/query_actBands", method = RequestMethod.POST)
-	public Map<String, Object> queryactBands(Brand brand, Page page, String id)
+	public Map<String, Object> queryactBands(String name, Page page, String id)
 			throws Exception {
 		if (id == null) {
 			return null;
 		} else {
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("rows",
-					activityService.findBrandAct(brand, page,
+					activityService.findBrandAct(name, page,
 							Integer.valueOf(id)));
 			map.put("total", page.getTotalRows());
 			return map;
@@ -300,6 +321,86 @@ public class ActivityControl {
 		return "activity/updateActivity";
 	}
 
+//	/**
+//	 * 修改活动
+//	 */
+//	@RequestMapping("/activity/update")
+//	@ResponseBody
+//	public void updateActivity(HttpSession session, String id,
+//			@RequestParam("picture") MultipartFile mFile,
+//			HttpServletRequest request, HttpServletResponse response,
+//			@ModelAttribute ActivityInfo activity, BindingResult result,
+//			Model model) throws IOException {
+//		response.setContentType("text/html; charset=utf-8");
+//		PrintWriter out = response.getWriter();
+//
+//		String fname = mFile.getOriginalFilename();
+//		String suf_fix = fname.substring(fname.length() - 4, fname.length());
+//		String fileNewName = UUIDUtil.generate() + suf_fix;
+//		FileUtil.saveFile(mFile.getInputStream(), Constants.ACTIVITY_IMAGE_DIR,
+//				fileNewName);
+//		activity.setPicture(fname);
+//
+//		activityService.updateActivity(activity, null);
+//
+//		String title = request.getParameter("title");
+//		String descr = request.getParameter("descr");
+//		activityService.updateDiscountNumberByActId(title, descr,
+//				activity.getId());
+//		out.print(CommonUtil.toJson(1));
+//		out.flush();
+//		out.close();
+//	}
+//
+//	/**
+//	 * 添加活动
+//	 */
+//	@RequestMapping("/activity/saveActivity")
+//	@ResponseBody
+//	public void saveActivity(HttpSession session, HttpServletRequest request,
+//			HttpServletResponse response,
+//			@RequestParam("picture") MultipartFile mFile,
+//			@ModelAttribute ActivityInfo activity, BindingResult result,
+//			Model model) throws IOException {
+//		if (activity == null) {
+//			activity = new ActivityInfo();
+//		}
+//		response.setContentType("text/html; charset=utf-8");
+//		PrintWriter out = response.getWriter();
+//		String fname = mFile.getOriginalFilename();
+//		String suf_fix = fname.substring(fname.length() - 4, fname.length());
+//		String fileNewName = UUIDUtil.generate() + suf_fix;
+//		FileUtil.saveFile(mFile.getInputStream(), Constants.ACTIVITY_IMAGE_DIR,
+//				fileNewName);
+//		activity.setPicture(fname);
+//		activity.setTag(1);
+//		Token token = Token.getInstance();
+//		if (token.isTokenValid(request)) {
+//			activityService.saveActivity(activity, null);
+//
+//			DiscountNumber discountNumber = new DiscountNumber();
+//			discountNumber.setActivityInfo(activity);
+//			discountNumber.setTitle(request.getParameter("title"));
+//			discountNumber.setDescr(request.getParameter("descr"));
+//			activityService.saveDiscountNumber(discountNumber);
+//			out.print(CommonUtil.toJson(activity.getId()));
+//		} else {
+//
+//			activityService.updateActivity(activity, null);
+//
+//			String title = request.getParameter("title");
+//			String descr = request.getParameter("descr");
+//			activityService.updateDiscountNumberByActId(title, descr,
+//					activity.getId());
+//			out.print(CommonUtil.toJson(activity.getId()));
+//			token.saveToken(request);
+//		}
+//		
+//		out.flush();
+//		out.close();
+//
+//	}
+	
 	/**
 	 * 修改活动
 	 */
@@ -393,6 +494,29 @@ public class ActivityControl {
 		out.flush();
 		out.close();
 	}
+	
+	@RequestMapping("/activity/checkActNameAndTime")
+	@ResponseBody
+	public void checkActNameAndTime(HttpServletResponse response,String name, String dTime){
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		response.setContentType("text/html; charset=utf-8");
+		PrintWriter out = null ;
+		int count = 0 ;
+		try {
+			out = response.getWriter();
+			count = activityService.checkActNameAndTime(name, sdf.parse(dTime));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(count > 0){
+			out.print(CommonUtil.toJson(1));
+		}else{
+			out.print(CommonUtil.toJson(0));
+		}
+		out.flush();
+		out.close();
+	}
 
 	/**
 	 * 添加活动
@@ -407,88 +531,105 @@ public class ActivityControl {
 		response.setContentType("text/html; charset=utf-8");
 		PrintWriter out = response.getWriter();
 
-		if (activity == null) {
-			activity = new ActivityInfo();
-		}
-		activity.setTag(1);
-		File uploadPath = new File(Constants.ACTIVITY_IMAGE_DIR);
-		File tempPath = new File(Constants.ACTIVITY_IMAGE_BUFFER);
-		if (!uploadPath.exists()) {
-			uploadPath.mkdirs();
-		}
-		if (!tempPath.exists()) {
-			tempPath.mkdirs();
-		}
-		String fileNam = null;
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		DiskFileItemFactory factory = new DiskFileItemFactory(409600, tempPath);
-		ServletFileUpload upload = new ServletFileUpload(factory);
-		upload.setSizeMax(4194304);
+		Token token = Token.getInstance();
+		if (token.isTokenValid(request)) {
 
-		com.chinarewards.metro.domain.file.FileItem pic = null;
-		try {
-			List<FileItem> items = upload.parseRequest(request);
-			for (FileItem item : items) {
-				if (item.isFormField()) {
-					if (item.getFieldName().equals("activityName")) {
-						activity.setActivityName(item.getString("UTF-8"));
-					}
-					if (item.getFieldName().equals("startDate")) {
-						activity.setStartDate(sdf.parse(item.getString("UTF-8")));
-					}
-					if (item.getFieldName().equals("endDate")) {
-						activity.setEndDate(sdf.parse(item.getString("UTF-8")));
-					}
-					if (item.getFieldName().equals("description")) {
-						activity.setDescription(item.getString("UTF-8"));
-					}
-					if (item.getFieldName().equals("hoster")) {
-						activity.setHoster(item.getString("UTF-8"));
-					}
-					if (item.getFieldName().equals("activityNet")) {
-						activity.setActivityNet(item.getString("UTF-8"));
-					}
-					if (item.getFieldName().equals("contacts")) {
-						activity.setContacts(item.getString("UTF-8"));
-					}
-					if (item.getFieldName().equals("conTel")) {
-						activity.setConTel(item.getString("UTF-8"));
-					}
+			if (activity == null) {
+				activity = new ActivityInfo();
+			}
+			activity.setTag(1);
+			File uploadPath = new File(Constants.ACTIVITY_IMAGE_DIR);
+			File tempPath = new File(Constants.ACTIVITY_IMAGE_BUFFER);
+			if (!uploadPath.exists()) {
+				uploadPath.mkdirs();
+			}
+			if (!tempPath.exists()) {
+				tempPath.mkdirs();
+			}
+			String fileNam = null;
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			DiskFileItemFactory factory = new DiskFileItemFactory(409600,
+					tempPath);
+			ServletFileUpload upload = new ServletFileUpload(factory);
+			upload.setSizeMax(4194304);
 
-				} else {
-					if (!item.isFormField()) {
-						if (null != item.getName() && !item.getName().isEmpty()) {
-							pic = new com.chinarewards.metro.domain.file.FileItem();
-							pic.setFilesize(item.getSize());
-							pic.setOriginalFilename(item.getName());
-							pic.setMimeType(item.getContentType());
+			com.chinarewards.metro.domain.file.FileItem pic = null;
+			try {
+				List<FileItem> items = upload.parseRequest(request);
+				for (FileItem item : items) {
+					if (item.isFormField()) {
+						if (item.getFieldName().equals("activityName")) {
+							activity.setActivityName(item.getString("UTF-8"));
+						}
+						if (item.getFieldName().equals("startDate")) {
+							activity.setStartDate(sdf.parse(item
+									.getString("UTF-8")));
+						}
+						if (item.getFieldName().equals("endDate")) {
+							activity.setEndDate(sdf.parse(item
+									.getString("UTF-8")));
+						}
+						if (item.getFieldName().equals("description")) {
+							activity.setDescription(item.getString("UTF-8"));
+						}
+						if (item.getFieldName().equals("hoster")) {
+							activity.setHoster(item.getString("UTF-8"));
+						}
+						if (item.getFieldName().equals("activityNet")) {
+							activity.setActivityNet(item.getString("UTF-8"));
+						}
+						if (item.getFieldName().equals("contacts")) {
+							activity.setContacts(item.getString("UTF-8"));
+						}
+						if (item.getFieldName().equals("conTel")) {
+							activity.setConTel(item.getString("UTF-8"));
+						}
 
-							String suffix = getSuffix(item.getName());
-							activity.setPicture(item.getName());
-							String fileName = UUIDUtil.generate() + suffix;
-							fileNam = fileName;
-							item.write(new File(uploadPath, fileName)); // 移到正式目录
-							item.delete(); // 删除临时文件
+					} else {
+						if (!item.isFormField()) {
+							if (null != item.getName()
+									&& !item.getName().isEmpty()) {
+								pic = new com.chinarewards.metro.domain.file.FileItem();
+								pic.setFilesize(item.getSize());
+								pic.setOriginalFilename(item.getName());
+								pic.setMimeType(item.getContentType());
 
-							pic.setUrl(fileName);
+								String suffix = getSuffix(item.getName());
+								activity.setPicture(item.getName());
+								String fileName = UUIDUtil.generate() + suffix;
+								fileNam = fileName;
+								item.write(new File(uploadPath, fileName)); // 移到正式目录
+								item.delete(); // 删除临时文件
+
+								pic.setUrl(fileName);
+							}
 						}
 					}
 				}
+				activityService.saveActivity(activity, pic);
+
+				DiscountNumber discountNumber = new DiscountNumber();
+				discountNumber.setActivityInfo(activity);
+				discountNumber.setTitle(request.getParameter("title"));
+				discountNumber.setDescr(request.getParameter("descr"));
+				activityService.saveDiscountNumber(discountNumber);
+
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			activityService.saveActivity(activity, pic);
+			// session.setAttribute("id", activity.getId());
+			
 
-			DiscountNumber discountNumber = new DiscountNumber();
-			discountNumber.setActivityInfo(activity);
-			discountNumber.setTitle(request.getParameter("title"));
-			discountNumber.setDescr(request.getParameter("descr"));
-			activityService.saveDiscountNumber(discountNumber);
+		} else {
+			activityService.updateActivity(activity, null);
 
-		} catch (Exception e) {
-			e.printStackTrace();
+			String title = request.getParameter("title");
+			String descr = request.getParameter("descr");
+			activityService.updateDiscountNumberByActId(title, descr,
+					activity.getId());
+			token.saveToken(request);
 		}
-		// session.setAttribute("id", activity.getId());
 		out.print(CommonUtil.toJson(activity.getId()));
-
 		out.flush();
 		out.close();
 
@@ -518,5 +659,19 @@ public class ActivityControl {
 			e.printStackTrace();
 		}
 		return "activity/activityList";
+	}
+	
+	
+	@RequestMapping(value = "/showPicture")
+	public void shopPicUpload(HttpServletResponse response){
+		try {
+			PrintWriter writer = response.getWriter();
+			response.setContentType("text/html;charset=utf-8");
+			//writer.write(CommonUtil.toJson(list));
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

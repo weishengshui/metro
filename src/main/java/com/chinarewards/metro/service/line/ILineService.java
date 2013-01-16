@@ -89,6 +89,12 @@ public interface ILineService {
 	 * @return
 	 */
 	public MetroSite findSiteById(Integer id);
+	/**
+	 * 判断站台是否存在
+	 * @param name
+	 * @return
+	 */
+	public MetroSite findSiteByName(String name);
 	
 	public List<MetroLine> findLineBySiteId(Integer id);
 	/**

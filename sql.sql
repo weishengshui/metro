@@ -1,4 +1,10 @@
 
+alter table MerchandiseFile add width int;
+alter table MerchandiseFile add height int;
+
+alter table FileItem add width int;
+alter table FileItem add height int;
+
 /*
 Navicat MySQL Data Transfer
 

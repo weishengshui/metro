@@ -48,8 +48,7 @@ function getStatus(v){
 	</form>
 
 
-	<table id="tt" class="easyui-datagrid" width="100%" height="100%"  
-	           				url="list" rownumbers="true" pagination="true">  
+
 	    
 	<!-- 显示列表Table -->
 	<table id="table" class="easyui-datagrid" data-options="rownumbers:true,url:'listMessagesTask',fitColumns:true,loadMsg:'正在载入...',pagination:true,
@@ -61,7 +60,7 @@ function getStatus(v){
 	            <th data-options="field:'taskName',width:30">任务名称</th>  
 	            <th data-options="field:'planSendTime',width:30,formatter:function(v){return dateFormat(v)}">计划发送时间</th>
 	            <th data-options="field:'actualSendTime',width:30,formatter:function(v){return dateFormat(v)}">实际发送时间</th>
-	            <th data-options="field:'endTime',width:30">结束时间</th>
+	            <th data-options="field:'endTime',width:30,formatter:function(v){return dateFormat(v)}">结束时间</th>
 	            <th data-options="field:'amount',width:30">总数目</th>
 	            <th data-options="field:'successAmount',width:30">成功数目</th>
 	            <th data-options="field:'failureAmount',width:30">失败数目</th>

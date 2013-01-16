@@ -1,11 +1,13 @@
 package com.chinarewards.metro.service.message.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hsqldb.lib.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import com.chinarewards.metro.core.common.JDBCDaoSupport;
 import com.chinarewards.metro.core.common.Page;
 import com.chinarewards.metro.domain.message.MessageTask;
 import com.chinarewards.metro.domain.message.MessageTelephone;
+import com.chinarewards.metro.domain.shop.Shop;
 import com.chinarewards.metro.model.message.MessageCount;
 import com.chinarewards.metro.service.message.IMessageService;
 import com.chinarewards.metro.service.message.InitTelephoneTask;
@@ -83,21 +86,40 @@ public class MessageService implements IMessageService {
 
 	@Override
 	public List<MessageTask> listMessagesTask(MessageTask mt, Page page) {
-		Map<String,Object> map = new HashMap<String, Object>();
-		StringBuffer hql = new StringBuffer();
-		hql.append("from MessageTask where 1=1");
-		
-		if(mt.getTaskStates()!=null&&!"".equals(mt.getTaskStates())){
-			hql.append(" and taskStates = :taskStates");
-			map.put("taskStates",mt.getTaskStates());
-		}
-		if(StringUtils.isNotEmpty(mt.getTaskName())){
-			hql.append(" and taskName like :taskName");
-			map.put("taskName",mt.getTaskName() );
-		}
+	
+		List<Object> args = new ArrayList<Object>();
+		List<Object> argsCount = new ArrayList<Object>();
+		StringBuffer sql = new StringBuffer();
+		sql.append("select taskId,taskName,content,planSendTime,actualSendTime,endTime,taskStates ,amount from MessageTask where 1=1");
 		
 	
-		List<MessageTask> mtlist = hbDaoSupport.findTsByHQLPage(hql.toString(), map, page);
+		StringBuffer sqlCount = new StringBuffer();
+		sqlCount.append("SELECT count(1) FROM MessageTask  WHERE 1=1");
+		if(mt.getTaskStates()!=null&&!"".equals(mt.getTaskStates())){
+			sql.append(" AND taskStates = ?");
+			sqlCount.append(" and taskStates = ?");
+			args.add(mt.getTaskStates());
+			argsCount.add(mt.getTaskStates());
+		}
+		if(StringUtils.isNotEmpty(mt.getTaskName())){
+			sql.append(" AND taskName = ?");
+			sqlCount.append(" and taskName = ?");
+			args.add(mt.getTaskName());
+			argsCount.add(mt.getTaskName());
+		}
+		
+		sql.append(" LIMIT ?,?");
+		args.add(page.getStart());
+		args.add(page.getRows());
+		if(argsCount.size()>0){
+			page.setTotalRows(jdbcDaoSupport.findCount(sqlCount.toString(),argsCount.toArray()));
+		}else{
+			page.setTotalRows(jdbcDaoSupport.findCount(sqlCount.toString()));
+		}
+	
+		
+		
+		List<MessageTask> mtlist = jdbcDaoSupport.findTsBySQL(MessageTask.class, sql.toString(),args.toArray());
 		//根据taskid获取发送成功号码数，失败号码数
 		
 		for(int i=0;i<mtlist.size();i++){
@@ -238,5 +260,56 @@ public class MessageService implements IMessageService {
 		map.put("taskId", taskid);
 		hbDaoSupport.executeHQL(hql, map);
 		
+	}
+
+	@Override
+	public int checkTelephone(String sTelephone, List<MessageTelephone> listTelephone) {
+		int tel=0;
+		if(!StringUtil.isEmpty(sTelephone)){
+			String[] t=sTelephone.split(",");
+			String[] tl=sTelephone.split(",");
+			for (int i = 0; i < t.length; i++) {
+				if(!t[i].trim().equals("")){
+					String tvalue=t[i];
+					int count=0;
+					for(int j = 0; j < tl.length; j++){
+						if(!tl[j].trim().equals("")){
+							if(tvalue.equals(tl[j])){
+								count++;
+							}
+						}
+					}
+					if(count>=2){
+						tel=1;
+						break;
+					}
+					if(t[i].length()!=11){
+						tel=2;
+						break;
+					}
+				}
+			}
+		}
+		if(listTelephone!=null&&listTelephone.size()!=0){
+			for(MessageTelephone t:listTelephone){
+				int count=0;
+				for(MessageTelephone tl:listTelephone){
+					if(!t.getTelephone().trim().equals("")&&!tl.getTelephone().trim().equals("")){
+						if(t.getTelephone().equals(tl.getTelephone())){
+							count++;
+						}
+					}
+				}
+				if(count>=2){
+					tel=1;
+					break;
+				}
+				if(t.getTelephone().length()!=11){
+					tel=2;
+					break;
+				}
+			}
+		}
+		return tel;
 	}
 }

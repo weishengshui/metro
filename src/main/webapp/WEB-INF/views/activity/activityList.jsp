@@ -29,8 +29,6 @@
 		}
 	} 
 	
-	
-	
 	$(document).ready(function(){
 		
 		$('#searchbtn').click(function(){
@@ -49,6 +47,7 @@
 		$('#deleteAct').click(function(){
 			var data ='';
 			var rows = $('#table1').datagrid('getChecked');
+			
 			for(var i in rows){
 				data += rows[i].id+',';
 			}
@@ -72,11 +71,19 @@
 		});
 		
 		$('#cancerAct').click(function(){
-			
-			var data ='';
+			var data ='';var v;var flag = false ;
 			var rows = $('#table1').datagrid('getChecked');
 			for(var i in rows){
 				data += rows[i].id+',';
+				if(stateCompera(v,rows[i],i) == '已取消' || stateCompera(v,rows[i],i) == '已结束'){
+					flag = true ;
+					break ;
+				}
+			}
+			if(flag){
+				$('#updateAct').attr("disabled","true"); 
+				$('#cancerAct').attr("disabled","true"); 
+				return false ;
 			}
 			data = data.substring(0, data.length -1);
 			if(rows.length == 0){
@@ -183,7 +190,7 @@
 	<!-- 显示列表Table -->
 	
 	<table  id="table1"  title="活动详情" style="width: 1460px" class="easyui-datagrid" data-options="url:'findActivities',fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
-				rownumbers:true,pageList:pageList,singleSelect:true,onSelect:function(rowIndex, rowData){operates(rowIndex, rowData)}">    
+				rownumbers:true,pageList:pageList,singleSelect:false,onCheck:function(rowIndex, rowData){operates(rowIndex, rowData)}">    
 	    <thead>  
 	        <tr>  
 	        	<th field="ck" checkbox="true"></th>

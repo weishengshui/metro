@@ -157,6 +157,10 @@
                 $('#dg').datagrid('selectRow', editIndex)  
                         .datagrid('beginEdit', editIndex);  
             }
+            $('#dg').datagrid('appendRow',{id:id,name: name});
+    		editIndex = $('#dg').datagrid('getRows').length-1;  
+          	$('#dg').datagrid('selectRow', editIndex).datagrid('beginEdit', editIndex);
+          	accept();
         }  
         
         function accept(){  
@@ -219,6 +223,10 @@
                 $('#dg1').datagrid('selectRow', editIndex1)  
                         .datagrid('beginEdit', editIndex1);  
             }
+            $('#dg1').datagrid('appendRow',{id:id,name: name});
+    		editIndex = $('#dg1').datagrid('getRows').length-1;  
+          	$('#dg1').datagrid('selectRow', editIndex).datagrid('beginEdit', editIndex);
+          	accept();
         }  
         
         function accept1(){  

@@ -57,11 +57,8 @@ public interface IActivityService {
 	
 	/**
 	 * 查询活动信息
-	 * @param activity
-	 * @param page
-	 * @return
 	 */
-	public List<ActivityInfo> findActivity(ActivityInfo activity,Page page);
+	public List<ActivityInfo> findActivity(String activityName,String startDate,String endDate,Page page);
 	
 	/**
 	 * 查询单条活动信息
@@ -85,7 +82,7 @@ public interface IActivityService {
 	 * @param id
 	 * @return
 	 */
-	public List<BrandMode> findBrandAct(Brand brand,Page page,Integer id);
+	public List<BrandMode> findBrandAct(String name,Page page,Integer id);
 	
 	/**
 	 * 查询没有绑定活动的品牌
@@ -147,4 +144,12 @@ public interface IActivityService {
 	 * @param posIds
 	 */
 	public void delPosBand(String[] posIds);
+	
+	/**
+	 * 检查活动的开始时间和名称是否相同
+	 * @param name
+	 * @param dTime
+	 * @return
+	 */
+	public int checkActNameAndTime(String name,Date dTime);
 }

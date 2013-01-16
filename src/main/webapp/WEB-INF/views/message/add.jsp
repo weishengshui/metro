@@ -92,6 +92,7 @@
 			$('#messageForm').form('submit',{
 				success:function(result){
 					alert(eval('('+result+')').msg);
+				    location.replace(location);
 				}
 			}); 
 		}

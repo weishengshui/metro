@@ -2,8 +2,10 @@ package com.chinarewards.metro.core.common;
 
 import java.io.File;
 
+
 public abstract class Constants {
 
+	public static String sp = File.separator;
 	/**
 	 * 分页参数的大小
 	 */
@@ -93,8 +95,6 @@ public abstract class Constants {
 	/**
 	 * 门店图片
 	 */
-	public static final String SHOP_IMG = "D:" + File.separator + "shop"
-			+ File.separator + "images" + File.separator;
-
+	public static final String SHOP_IMG = System.getProperty("user.dir")+sp+"shop"+sp+"images"+sp;
 
 }

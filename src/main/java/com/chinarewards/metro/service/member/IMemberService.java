@@ -73,6 +73,14 @@ public interface IMemberService {
 	public Member findMemberByPhone(String phone);
 
 	/**
+	 * 根据账户查找会员
+	 * 
+	 * @param accountId
+	 * @return 
+	 */
+	public Member findMemberByAccountId(String accountId);
+
+	/**
 	 * 根据条件查询会员的优惠码记录
 	 * 
 	 * @param criteria
@@ -88,11 +96,12 @@ public interface IMemberService {
 	 * @return
 	 */
 	public Long countDiscountNumberRecords(DiscountNumberRecordCriteria criteria);
+
 	/**
 	 * 发送激活码
 	 */
-	public void sendActivationCode(Integer memeberId,String phone);
-	
+	public void sendActivationCode(Integer memeberId, String phone);
+
 	/**
 	 * 根据条件查询会员 短信发送历史记录
 	 * 
@@ -101,7 +110,7 @@ public interface IMemberService {
 	 */
 	public List<MemberSMSOutboxHistoryVo> searchMemberSMSOutboxHistory(
 			MemberSMSOutboxHistoryCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询会员 短信发送历史记录总数
 	 * 
@@ -110,7 +119,7 @@ public interface IMemberService {
 	 */
 	public Long countMemberSMSOutboxHistory(
 			MemberSMSOutboxHistoryCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询等待发送的短信记录
 	 * 
@@ -119,7 +128,7 @@ public interface IMemberService {
 	 */
 	public List<MemberSMSOutboxHistoryVo> searchMemberSMSOutboxWait(
 			MemberSMSOutboxHistoryCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询等待发送的短信记录总数
 	 * 
@@ -127,7 +136,7 @@ public interface IMemberService {
 	 * @return
 	 */
 	public Long countMemberSMSOutboxWait(MemberSMSOutboxHistoryCriteria criteria);
-	
+
 	/**
 	 * 查询会员参加的品牌记录
 	 * 
@@ -135,7 +144,7 @@ public interface IMemberService {
 	 * @return
 	 */
 	public List<MemberBrandVo> searchAttendBrands(MemberAttendCriteria criteria);
-	
+
 	/**
 	 * 查询会员参加的品牌记录总数
 	 * 
@@ -143,15 +152,16 @@ public interface IMemberService {
 	 * @return
 	 */
 	public Long countAttendBrands(MemberAttendCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询会员的积分获取记录
 	 * 
 	 * @param criteria
 	 * @return
 	 */
-	public List<OrderInfo> searchIntegralGetRecords(IntegralRecordCriteria criteria);
-	
+	public List<OrderInfo> searchIntegralGetRecords(
+			IntegralRecordCriteria criteria);
+
 	/**
 	 * 根据条件查询会员的积分获取记录总数
 	 * 
@@ -159,15 +169,16 @@ public interface IMemberService {
 	 * @return
 	 */
 	public Long countIntegralGetRecords(IntegralRecordCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询会员的积分使用记录
 	 * 
 	 * @param criteria
 	 * @return
 	 */
-	public List<OrderInfo> searchIntegralUseRecords(IntegralRecordCriteria criteria);
-	
+	public List<OrderInfo> searchIntegralUseRecords(
+			IntegralRecordCriteria criteria);
+
 	/**
 	 * 根据条件查询会员的积分使用记录总数
 	 * 
@@ -175,7 +186,7 @@ public interface IMemberService {
 	 * @return
 	 */
 	public Long countIntegralUseRecords(IntegralRecordCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询会员的储蓄账户充值记录
 	 * 
@@ -184,7 +195,7 @@ public interface IMemberService {
 	 */
 	public List<OrderInfo> searchSavingsAccountGetRecords(
 			SavingsAccountRecordCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询会员的储蓄账户充值记录总数
 	 * 
@@ -193,7 +204,7 @@ public interface IMemberService {
 	 */
 	public Long countSavingsAccountGetRecords(
 			SavingsAccountRecordCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询会员的储蓄账户使用记录
 	 * 
@@ -202,7 +213,7 @@ public interface IMemberService {
 	 */
 	public List<OrderInfo> searchSavingsAccountUseRecords(
 			SavingsAccountRecordCriteria criteria);
-	
+
 	/**
 	 * 根据条件查询会员的储蓄账户使用记录总数
 	 * 
@@ -222,6 +233,4 @@ public interface IMemberService {
 	public List<AccountBalanceUnits> findExpiredIntegralsByMember(
 			Member member, Date fromDate, Date toDate, String unitCodeBinke , Page page);
 
-
-	
 }

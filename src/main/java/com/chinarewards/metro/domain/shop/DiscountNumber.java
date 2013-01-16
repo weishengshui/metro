@@ -38,6 +38,9 @@ public class DiscountNumber implements Serializable {
 	// 生成此优惠码的时候，此门店的所发布的优惠(一个门店只能发布一个优惠)
 	private String title;
 
+	//1:表示使用中，-1：表示过期，0：表示未使用
+	private Integer state ;
+	
 	@Lob
 	private String descr;
 
@@ -121,6 +124,14 @@ public class DiscountNumber implements Serializable {
 
 	public void setActivityInfo(ActivityInfo activityInfo) {
 		this.activityInfo = activityInfo;
+	}
+
+	public Integer getState() {
+		return state;
+	}
+
+	public void setState(Integer state) {
+		this.state = state;
 	}
 
 }
