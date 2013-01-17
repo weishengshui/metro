@@ -55,7 +55,7 @@ public class Merchandise implements Serializable {
 	// 采购单价
 	private Double purchasePrice;
 	
-	//采购价
+	//运费
 	private Double freight;
 
 	// 供应商名称
