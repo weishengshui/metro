@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.Expression;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,16 +72,15 @@ public class ActivityServiceImpl implements IActivityService {
 				criteria.add(Restrictions.like("activityName", activityName,MatchMode.ANYWHERE));
 			}
 			
-			if (StringUtils.isNotEmpty(startDate)) {
-				criteria.add(Restrictions.eq("startDate", sdf.parse(startDate)));
+			if (StringUtils.isNotEmpty(startDate) && StringUtils.isNotEmpty(endDate)) {
+				criteria.add(Restrictions.between("startDate", sdf.parse(startDate), sdf.parse(endDate)));
+			}else if (StringUtils.isNotEmpty(startDate)) {
+				criteria.add(Restrictions.between("startDate", sdf.parse(startDate), sdf.parse(startDate)));
+			}else if (StringUtils.isNotEmpty(endDate)) {
+				criteria.add(Restrictions.between("endDate", sdf.parse(endDate), sdf.parse(endDate)));
 			}
-			
-			if (StringUtils.isNotEmpty(endDate)) {
-				criteria.add(Restrictions.eq("endDate", sdf.parse(endDate)));
-			}
-			
+			criteria.add(Restrictions.not(Expression.eq("tag",-1)));
 			return hbDaoSupport.findPageByCriteria(page, criteria);
-			
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -192,10 +192,12 @@ public class ActivityServiceImpl implements IActivityService {
 
 	@Override
 	public void deleteActivity(String id) {
-		String hql = "delete from ActivityInfo where id = ? ";
-		String hql2 = "delete from BrandActivity a where a.activityInfo.id = ? ";
-		hbDaoSupport.executeHQL(hql, Integer.valueOf(id));
-		hbDaoSupport.executeHQL(hql2, Integer.valueOf(id));
+//		String hql = "delete from ActivityInfo where id = ? ";
+//		String hql2 = "delete from BrandActivity a where a.activityInfo.id = ? ";
+//		hbDaoSupport.executeHQL(hql, Integer.valueOf(id));
+//		hbDaoSupport.executeHQL(hql2, Integer.valueOf(id));
+		String hql = "update ActivityInfo set tag = ? where id = ?";
+		hbDaoSupport.executeHQL(hql.toString(), -1, Integer.valueOf(id));
 	}
 
 	@Override

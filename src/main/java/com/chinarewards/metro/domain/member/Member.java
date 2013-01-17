@@ -37,6 +37,7 @@ public class Member implements Serializable{
 	private String city;
 	private String area;
 	private String postcode;
+	private String source;	//注册来源 0表示系统注册 , 非0表示来源pos机且是posId
 	
 	@Column(nullable = true)
 	private Integer industry;  //行业
@@ -75,6 +76,14 @@ public class Member implements Serializable{
 	@PrimaryKeyJoinColumn
 	private MemberCard card;
 	
+	public String getSource() {
+		return source;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}
+
 	public String getSurname() {
 		return surname;
 	}

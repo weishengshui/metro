@@ -231,7 +231,7 @@ select {
 							<td width="200px" align="left" colspan="2">
 								<input type="hidden" name='id' id='id_' />
 								<input id="name" type='text' name='name' style="width:150px" 
-												class="easyui-validatebox" data-options="required:true"/>
+												class="easyui-validatebox" data-options="required:true" maxlength="20"/>
 							</td>
 						</tr>
 						<tr>
@@ -239,7 +239,7 @@ select {
 							<td width="80px">排序编号：</td>
 							<td width="200px" align="left" colspan="2">
 								<input id="displaySort" type='text' name='displaySort' style="width:150px"  
-												class="easyui-numberbox" data-options="required:true"/>
+												class="easyui-numberbox" data-options="required:true" maxlength="20"/>
 							</td>
 						</tr>
 						<tr>

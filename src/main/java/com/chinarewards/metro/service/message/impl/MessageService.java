@@ -102,15 +102,16 @@ public class MessageService implements IMessageService {
 			argsCount.add(mt.getTaskStates());
 		}
 		if(StringUtils.isNotEmpty(mt.getTaskName())){
-			sql.append(" AND taskName = ?");
-			sqlCount.append(" and taskName = ?");
-			args.add(mt.getTaskName());
+			sql.append(" AND taskName like ?");
+			sqlCount.append(" and taskName like ?");
+			args.add("%"+mt.getTaskName()+"%");
 			argsCount.add(mt.getTaskName());
 		}
 		
 		sql.append(" LIMIT ?,?");
 		args.add(page.getStart());
 		args.add(page.getRows());
+		System.out.println(sql);
 		if(argsCount.size()>0){
 			page.setTotalRows(jdbcDaoSupport.findCount(sqlCount.toString(),argsCount.toArray()));
 		}else{

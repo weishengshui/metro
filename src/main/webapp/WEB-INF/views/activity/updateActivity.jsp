@@ -372,7 +372,7 @@
 			    <thead>  
 			        <tr>  
 			        	<th checkbox="true"></th>
-			        	<th data-options="field:'id',width:30">POS机编号</th>
+			        	<th data-options="field:'id',width:30,hidden:true">POS机编号</th>
 			        	<th data-options="field:'code',width:30">POS机号</th>
 			            <th data-options="field:'bindDate',width:30,formatter:function(v){return dateFormat(v);}">绑定时间</th>
 			        </tr>  

@@ -4,25 +4,20 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
 import org.hibernate.annotations.GenericGenerator;
 
-import com.chinarewards.metro.domain.category.Category;
-
 /**
- * 商品目录
- * 
+ * 商品售卖形式
  * @author weishengshui
- * 
+ *
  */
 @Entity
-public class MerchandiseCatalog {
-
+public class MerchandiseSaleform {
+	
 	@Id
 	@GeneratedValue(generator = "system-uuid")
 	@GenericGenerator(name = "system-uuid", strategy = "uuid")
@@ -31,20 +26,17 @@ public class MerchandiseCatalog {
 	@ManyToOne
 	private Merchandise merchandise;
 
-	@ManyToOne
-	private Category category;
-
-	@Enumerated(EnumType.STRING)
-	private MerchandiseStatus status;
+	private Double price;
 	
-	//上下架时间
-	private Date on_offTIme;
+	//优惠价
+	private Double preferentialPrice;
 
-	// 　商品排序，数字越大越靠前
-	private Long displaySort;
-
+	// 兑换单位(RMB，缤刻)
+	private String unitId;
+	
+	@Column(updatable=false)
 	private Date createdAt;
-
+	@Column(updatable=false)
 	private Integer createdBy;
 
 	@Column(nullable = false)
@@ -53,7 +45,7 @@ public class MerchandiseCatalog {
 	@Column(nullable = false)
 	private Integer lastModifiedBy;
 	
-	public MerchandiseCatalog() {
+	public MerchandiseSaleform() {
 	}
 
 	public String getId() {
@@ -72,36 +64,28 @@ public class MerchandiseCatalog {
 		this.merchandise = merchandise;
 	}
 
-	public Category getCategory() {
-		return category;
+	public Double getPrice() {
+		return price;
 	}
 
-	public void setCategory(Category category) {
-		this.category = category;
+	public void setPrice(Double price) {
+		this.price = price;
 	}
 
-	public MerchandiseStatus getStatus() {
-		return status;
+	public Double getPreferentialPrice() {
+		return preferentialPrice;
 	}
 
-	public void setStatus(MerchandiseStatus status) {
-		this.status = status;
+	public void setPreferentialPrice(Double preferentialPrice) {
+		this.preferentialPrice = preferentialPrice;
 	}
 
-	public Date getOn_offTIme() {
-		return on_offTIme;
+	public String getUnitId() {
+		return unitId;
 	}
 
-	public void setOn_offTIme(Date on_offTIme) {
-		this.on_offTIme = on_offTIme;
-	}
-
-	public Long getDisplaySort() {
-		return displaySort;
-	}
-
-	public void setDisplaySort(Long displaySort) {
-		this.displaySort = displaySort;
+	public void setUnitId(String unitId) {
+		this.unitId = unitId;
 	}
 
 	public Date getCreatedAt() {

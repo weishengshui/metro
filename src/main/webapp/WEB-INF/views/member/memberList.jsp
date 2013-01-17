@@ -55,7 +55,7 @@
     	return o.province + o.city + o.area + o.address;
     }
     function getName(v,o,i){
-        return (o.surname==null?'':o.surname)+o.name;
+        return (o.surname==null?'':o.surname)+(o.name==null?'':o.name);
     }
 </script>
 </head>

@@ -14,17 +14,18 @@
 </style>
 <script>
 	function save(){
-		$('#myform').form('submit', {
-		    url:$("#id").val()==''?'saveBirthRule':'updateBirthRule',
-		    dataType:'json',
-		    onSubmit: function(){
-		    	return $('#myform').form('validate');
-			},
-		    success:function(id){
-			    if($("#id").val()=='')$("#id").val(id);
-		    	alert('保存成功');
-		    }
-		});
+		if($('#myform').form('validate')){
+			$.ajax({
+	        	url:$("#id").val()==''?'saveBirthRule':'updateBirthRule',
+	        	type:'post',
+	        	dataType:'json',
+	        	data:$("#myform").serialize(),
+	        	success:function(data){
+	        		if($("#id").val()=='')$("#id").val(id);
+			    	alert('保存成功');
+	        	}
+			});	
+		}
     }
 </script>
 </head>

@@ -56,6 +56,9 @@
 			}	
 			data = data.substring(0, data.length -1);
 			
+			if(!confirm("确认删除？","删除商品")){
+				return;
+			}
 			$.ajax({
 				url:'delete',
 				data:data,

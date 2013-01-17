@@ -39,18 +39,19 @@ import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.core.common.UserContext;
 import com.chinarewards.metro.core.service.IFileItemService;
 import com.chinarewards.metro.domain.category.Category;
-import com.chinarewards.metro.domain.file.FileItem;
 import com.chinarewards.metro.domain.merchandise.CatalogVo;
-import com.chinarewards.metro.domain.merchandise.CategoryVo;
 import com.chinarewards.metro.domain.merchandise.Merchandise;
 import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
 import com.chinarewards.metro.domain.merchandise.MerchandiseImageType;
+import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
 import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
 import com.chinarewards.metro.model.common.AjaxResponseCommonVo;
 import com.chinarewards.metro.model.common.ImageInfo;
 import com.chinarewards.metro.model.common.SelectVO;
+import com.chinarewards.metro.model.merchandise.CategoryVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
+import com.chinarewards.metro.model.merchandise.SaleFormVo;
 import com.chinarewards.metro.service.merchandise.IMerchandiseService;
 import com.chinarewards.metro.validator.merchandise.CreateMerchandiseValidator;
 
@@ -66,27 +67,6 @@ public class MerchandiseControler {
 	IFileItemService fileItemService;
 
 	/**
-	 * 获得商品所有没有子类的类别列表
-	 * 
-	 * @param userContext
-	 * @return
-	 */
-	public List<SelectVO> getMerchandiseCatagories() {
-
-		List<SelectVO> list = new ArrayList<SelectVO>();
-
-		List<Category> catagories = merchandiseService.getLeafs();
-		if (null == catagories) {
-			return (new ArrayList<SelectVO>());
-		}
-		for (Category ct : catagories) {
-			list.add(new SelectVO(ct.getName(), ct.getId()));
-		}
-
-		return list;
-	}
-
-	/**
 	 * 商品维护
 	 * 
 	 * @param model
@@ -94,7 +74,8 @@ public class MerchandiseControler {
 	 * @return
 	 */
 	@RequestMapping("/show")
-	public String showCreateMerchandise(HttpSession session, Model model, String id) {
+	public String showCreateMerchandise(HttpSession session, Model model,
+			String id) {
 
 		// prepare data
 		Merchandise merchandise = merchandiseService
@@ -103,10 +84,11 @@ public class MerchandiseControler {
 				.findMercCatalogsByMercIdAndNuit(merchandise.getId());
 		List<CategoryVo> categoryVos = merchandiseService
 				.findCategorysByMerchandise(merchandise);
-		
+
 		String imageSessionName = UUIDUtil.generate();
-		Map<String, MerchandiseFile> images = merchandiseService.findMerchandiseFIlesByMerchandise(merchandise);
-		System.out.println("merchandise images size is "+ images.size());
+		Map<String, MerchandiseFile> images = merchandiseService
+				.findMerchandiseFIlesByMerchandise(merchandise);
+		System.out.println("merchandise images size is " + images.size());
 		session.setAttribute(imageSessionName, images);
 		model.addAttribute("images", CommonUtil.toJson(images));
 		model.addAttribute("imageSessionName", imageSessionName);
@@ -126,7 +108,7 @@ public class MerchandiseControler {
 	 */
 	@RequestMapping("/add")
 	public String add(Model model) {
-		
+
 		return "merchandise/create";
 	}
 
@@ -159,12 +141,15 @@ public class MerchandiseControler {
 	@SuppressWarnings("unchecked")
 	@RequestMapping("/create")
 	@ResponseBody
-	public void createOrUpdateMerchandise(HttpServletResponse response,HttpSession session, 
-			String imageSessionName, @ModelAttribute Merchandise merchandise,
-			BindingResult result, Model mod, String rmbUnitId,
-			String binkeUnitId, Double rmbPrice, Double binkePrice,
-			Boolean rmb, Boolean binke, String[] categId, String[] status,
-			Long[] displaySort) throws IOException {
+	public void createOrUpdateMerchandise(HttpServletResponse response,
+			HttpSession session, String imageSessionName,
+			@ModelAttribute Merchandise merchandise, BindingResult result,
+			Model mod, String rmbUnitId, String binkeUnitId, Double rmbPrice,
+			Double binkePrice, Boolean rmb, Boolean binke,
+			Boolean rmbPreferential, Boolean binkePreferential,
+			Double rmbPreferentialPrice, Double binkePreferentialPrice,
+			String[] categId, String[] status, Long[] displaySort)
+			throws IOException {
 
 		PrintWriter out = null;
 		try {
@@ -176,40 +161,58 @@ public class MerchandiseControler {
 				merchandise = new Merchandise();
 			}
 
-			new CreateMerchandiseValidator(merchandiseService).validate(
-					merchandise, result);
-
 			List<MerchandiseFile> files = new ArrayList<MerchandiseFile>();
-			Map<String, MerchandiseFile> images = (Map<String, MerchandiseFile>)session.getAttribute(imageSessionName);
-			if(null !=  images && images.size() > 0){
-				for(Map.Entry<String, MerchandiseFile> entry : images.entrySet()){
+			Map<String, MerchandiseFile> images = (Map<String, MerchandiseFile>) session
+					.getAttribute(imageSessionName);
+			if (null != images && images.size() > 0) {
+				for (Map.Entry<String, MerchandiseFile> entry : images
+						.entrySet()) {
 					MerchandiseFile image = entry.getValue();
-					if(image.getUrl().startsWith(Constants.UPLOAD_TEMP_UID_PREFIX)){ //把临时文件移到正式目录
-						image.setUrl(FileUtil.moveFile(Constants.MERCHANDISE_IMAGE_BUFFER, image.getUrl(), Constants.MERCHANDISE_IMAGE_DIR));
+					if (image.getUrl().startsWith(
+							Constants.UPLOAD_TEMP_UID_PREFIX)) { // 把临时文件移到正式目录
+						image.setUrl(FileUtil.moveFile(
+								Constants.MERCHANDISE_IMAGE_BUFFER,
+								image.getUrl(), Constants.MERCHANDISE_IMAGE_DIR));
 					}
 					files.add(image);
 				}
 			}
 			
+			// merchandise category
 			List<CategoryVo> categoryVos = new ArrayList<CategoryVo>();
 			if (null != categId) {
 				for (int i = 0, length = categId.length; i < length; i++) {
-					categoryVos.add(new CategoryVo(categId[i], merchandise
-							.getCode(),
+					System.out.println("categId [] is " + categId[i]);
+					categoryVos.add(new CategoryVo(categId[i],
 							MerchandiseStatus.fromString(status[i]),
-							displaySort[i]));
+							SystemTimeProvider.getCurrentTime(),
+							displaySort[i], merchandise.getId()));
+				}
+			}
+			System.out.println("categoryVos is " + categoryVos.toString());
+
+			// merchandise sale forms
+			List<SaleFormVo> saleFormVos = new ArrayList<SaleFormVo>(); // 兑换形式
+			if (null != rmb) {// 正常售卖
+				if (null == rmbPreferential) { // 没有优惠
+					saleFormVos.add(new SaleFormVo(rmbUnitId, rmbPrice, null));
+				} else {
+					saleFormVos.add(new SaleFormVo(rmbUnitId, rmbPrice,
+							rmbPreferentialPrice));
+				}
+			}
+			if (null != binke) {// 积分兑换
+				if (null == binkePreferential) {// 没有优惠
+					saleFormVos.add(new SaleFormVo(binkeUnitId, binkePrice,
+							null));
+				} else {
+					saleFormVos.add(new SaleFormVo(binkeUnitId, binkePrice,
+							binkePreferentialPrice));
 				}
 			}
 
-			System.out.println("categoryVos is " + categoryVos.toString());
-			List<CatalogVo> catalogVos = new ArrayList<CatalogVo>(); // 兑换形式
-			if (null != rmb) {
-				catalogVos.add(new CatalogVo(rmbUnitId, rmbPrice));// 正常售卖
-			}
-			if (null != binke) {
-				catalogVos.add(new CatalogVo(binkeUnitId, binkePrice)); // 积分兑换
-			}
-
+			new CreateMerchandiseValidator(merchandiseService).validate(
+					merchandise, result);
 			if (result.hasErrors()) {
 				out.println(CommonUtil.toJson(new AjaxResponseCommonVo(result
 						.getAllErrors().get(0).getDefaultMessage())));
@@ -247,30 +250,31 @@ public class MerchandiseControler {
 						|| merchandise.getId().isEmpty()) { // insert
 
 					merchandiseService.createMerchandise(merchandise, files,
-							catalogVos, categoryVos);
-					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo("保存成功");
+							saleFormVos, categoryVos);
+					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo(
+							"保存成功");
 					commonVo.setId(merchandise.getId());
 					out.println(CommonUtil.toJson(commonVo));
 					out.flush();
 					return;
 				} else {// update
 					// 判断兑换形式是否有效，比如去掉一中兑换形式，而该形式已在某商品类别下，此时这种兑换形式就不能去掉
-					List<MerchandiseCatalog> catalogsList = merchandiseService
-							.findCatalogByMerId(merchandise.getId());
-					if (null != catalogsList && catalogsList.size() > 0) {
-						for (MerchandiseCatalog catalog : catalogsList) {
+					List<MerchandiseSaleform> saleForms = merchandiseService
+							.findSaleFormsByMerchandise(merchandise);
+					if (null != saleForms && saleForms.size() > 0) {
+						for (MerchandiseSaleform saleform : saleForms) {
 							boolean exists = false;
-							for (CatalogVo catalogVo : catalogVos) {
-								if (catalogVo.getUnitId().equals(
-										catalog.getUnitId())) {
+							for (SaleFormVo saleFormVo : saleFormVos) {
+								if (saleFormVo.getUnitId().equals(
+										saleform.getUnitId())) {
 									exists = true;
 									break;
 								}
 							}
 							if (!exists) { // 不存在就删除这一兑换形式的商品
 								if (!merchandiseService
-										.deleteMer_cataByCatalog(catalog)) {
-									if (catalog.getUnitId().equals("0")) {
+										.deleteSaleForm(saleform)) {
+									if (saleform.getUnitId().equals("0")) {
 										out.println(CommonUtil
 												.toJson(new AjaxResponseCommonVo(
 														"\"正常售卖\"已经与商品类别相关联，不能去掉")));
@@ -286,8 +290,9 @@ public class MerchandiseControler {
 						}
 					}
 					merchandiseService.updateMerchandise(merchandise, files,
-							catalogVos, categoryVos);
-					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo("保存成功");
+							saleFormVos, categoryVos);
+					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo(
+							"保存成功");
 					commonVo.setId(merchandise.getId());
 					out.println(CommonUtil.toJson(commonVo));
 					out.flush();
@@ -509,32 +514,32 @@ public class MerchandiseControler {
 		return new AjaxResponseCommonVo("删除成功");
 	}
 
-	/**
-	 * 批量删除商品的某一兑换类型
-	 * 
-	 * @param id
-	 * @param model
-	 * @return
-	 */
-	@RequestMapping(value = "/delete")
-	@ResponseBody
-	public AjaxResponseCommonVo delete(String[] id, Model model) {
-		System.out.println(id);
-		if (null != id && id.length > 0) {
-			for (String cataId : id) {
-				String code = merchandiseService
-						.checkMerchCataHasCategory(cataId);
-				if (null != code) {
-					return new AjaxResponseCommonVo("编号为\"" + code
-							+ "\"的商品已经与商品类别关联，不能删除");
-				}
-			}
-			merchandiseService.batchDelete(id);
-			return new AjaxResponseCommonVo("删除成功");
-		} else {
-			return new AjaxResponseCommonVo("请先选择要删除的行");
-		}
-	}
+//	/**
+//	 * 批量删除商品的某一兑换类型
+//	 * 
+//	 * @param id
+//	 * @param model
+//	 * @return
+//	 */
+//	@RequestMapping(value = "/delete")
+//	@ResponseBody
+//	public AjaxResponseCommonVo delete(String[] id, Model model) {
+//		System.out.println(id);
+//		if (null != id && id.length > 0) {
+//			for (String cataId : id) {
+//				String code = merchandiseService
+//						.checkMerchCataHasCategory(cataId);
+//				if (null != code) {
+//					return new AjaxResponseCommonVo("编号为\"" + code
+//							+ "\"的商品已经与商品类别关联，不能删除");
+//				}
+//			}
+//			merchandiseService.batchDelete(id);
+//			return new AjaxResponseCommonVo("删除成功");
+//		} else {
+//			return new AjaxResponseCommonVo("请先选择要删除的行");
+//		}
+//	}
 
 	/**
 	 * 判断指定商品是否在该类别下
@@ -589,7 +594,7 @@ public class MerchandiseControler {
 								sort[i]));
 					}
 				}
-				merchandiseService.addCatalog(categoryVos, cateId);
+				merchandiseService.addMerchandise(categoryVos, cateId);
 				out.println(CommonUtil.toJson(new AjaxResponseCommonVo("添加成功")));
 				out.flush();
 				return;
@@ -698,6 +703,9 @@ public class MerchandiseControler {
 				}
 				images.put(key, image);
 
+				System.out.println("images size is " + images.size()
+						+ " key is " + key + " imageSessionName is "
+						+ imageSessionName);
 				session.setAttribute(imageSessionName, images);
 
 				out.write("{url:\'" + image.getUrl() + "\',width:\'"

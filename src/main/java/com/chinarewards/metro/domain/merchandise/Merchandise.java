@@ -10,10 +10,12 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.hibernate.annotations.GenericGenerator;
+
+import com.chinarewards.metro.domain.brand.Brand;
 
 
 /**
@@ -52,6 +54,9 @@ public class Merchandise implements Serializable {
 
 	// 采购单价
 	private Double purchasePrice;
+	
+	//采购价
+	private Double freight;
 
 	// 供应商名称
 	private String supplierName;
@@ -68,6 +73,9 @@ public class Merchandise implements Serializable {
 
 	@OneToMany(mappedBy = "merchandise", fetch=FetchType.LAZY)
 	private Set<MerchandiseCatalog> merchandiseCatalogs;
+	
+	@OneToOne
+	private Brand brand;
 
 	public Double getPurchasePrice() {
 		return purchasePrice;
@@ -83,6 +91,22 @@ public class Merchandise implements Serializable {
 
 	public void setSupplierName(String supplierName) {
 		this.supplierName = supplierName;
+	}
+
+	public Double getFreight() {
+		return freight;
+	}
+
+	public void setFreight(Double freight) {
+		this.freight = freight;
+	}
+
+	public Brand getBrand() {
+		return brand;
+	}
+
+	public void setBrand(Brand brand) {
+		this.brand = brand;
 	}
 
 	public String getModel() {

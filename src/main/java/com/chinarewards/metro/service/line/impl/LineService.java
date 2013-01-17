@@ -583,6 +583,7 @@ public class LineService implements ILineService {
 			sql.append(" AND s.name like ?");
 			sqlCount.append(" AND s.name like ?");
 			args.add(shop.getName());
+			argsCount.add(shop.getName());
 		}
 		if(StringUtils.isNotEmpty(shop.getLinkman())){
 			sql.append(" AND s.linkman like ?");

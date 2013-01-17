@@ -49,7 +49,6 @@
 				resizable:true,
 				title:'预览图片'
 			});
-			//parent.parent.dialog("预览图片",url,width,height);
 		}
 		
 	$(function() {
@@ -284,8 +283,10 @@
 					return;
 				}
 				$('#'+keyId).val(result.key);
-				var imageSessionName = result.imageSessionName;
-				initImageSession(imageSessionName);
+				if($('#imageSessionName_dataForm').val() == ''){
+					initImageSession(result.imageSessionName);
+					
+				}
 				$('#'+aimageId).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=MERCHANDISE_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
 				$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=MERCHANDISE_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
 				style="display:none";
@@ -315,6 +316,22 @@
 		$('#imageSessionName_image5').val(imageSessionName);
 		$('#imageSessionName_image6').val(imageSessionName);
 	}
+	function openAddIamgeDialog(){
+		for(var i =0; i < length; i++){
+			var name;
+			if(i==0){
+				name = 'overview';
+			}else{
+				name = 'others';
+			}
+			deleteInputFile(name,'file'+i,'span'+i);
+		}
+		$('#addImage').dialog('center');
+		$('#addImage').dialog('open');
+	}
+	function closeAddIamgeDialog(){
+		$('#addImage').dialog('close');
+	}
 </script>
 
 </head>
@@ -334,12 +351,12 @@
 											<td width="200px" align="left">
 												<input name="id" type="hidden" value="${merchandise.id }">
 												<input type="hidden" name="imageSessionName" id="imageSessionName_dataForm" value="${imageSessionName }" />
-												<input id="code" name="code" value="${merchandise.code }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" readonly="readonly"/> 
+												<input id="code" name="code" value="${merchandise.code }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" maxlength="20"/> 
 											</td>
 											<td width="20px"><span style="color: red;">*</span></td>
 											<td width="80px">商品名称：</td>
 											<td width="200px" align="left">
-												<input id="name" name="name" value="${merchandise.name }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"> 
+												<input id="name" name="name" value="${merchandise.name }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" maxlength="20"> 
 											</td>
 											<td></td>
 										</tr>
@@ -347,13 +364,13 @@
 											<td width="20px"><span style="color: red;">*</span></td>
 											<td width="120px">型号：</td>
 											<td width="200px" align="left">
-												<input id="model" name="model" value="${merchandise.model }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true" readonly="readonly"> 
+												<input id="model" name="model" value="${merchandise.model }" type="text" style="width:150px" class="easyui-validatebox" data-options="required:true"  maxlength="20"> 
 											</td>
 											<td width="20px"><span style="color: red;">*</span></td>
 											<td width="80px">采购价：</td>
 											<td width="200px" align="left">
 												<input type="hidden" name="parent.id" id="parentId"> 
-												<input id="purchasePrice" name="purchasePrice" value="${merchandise.purchasePrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2,required:true"> 
+												<input id="purchasePrice" name="purchasePrice" value="${merchandise.purchasePrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2,required:true"  maxlength="20"> 
 											</td>
 											<td></td>
 										</tr>
@@ -384,7 +401,7 @@
 																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
 																<td width="80px">正常售卖：</td>
 																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
 																</td>
 															</tr>
 														</c:when>
@@ -393,7 +410,7 @@
 																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
 																<td width="80px">积分兑换：</td>
 																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
 																</td>
 															</tr>			
 														</c:otherwise>
@@ -408,14 +425,14 @@
 																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
 																<td width="80px">正常售卖：</td>
 																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
 																</td>
 															</tr>
 															<tr>
 																<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
 																<td width="80px">积分兑换：</td>
 																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																		<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
 																</td>
 															</tr>
 														</c:when>
@@ -424,14 +441,14 @@
 																<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
 																<td width="80px">正常售卖：</td>
 																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																		<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
 																</td>
 															</tr>
 															<tr>
 																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
 																<td width="80px">积分兑换：</td>
 																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
 																</td>
 															</tr>
 														</c:otherwise>
@@ -446,14 +463,14 @@
 												<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
 												<td width="80px">正常售卖：</td>
 												<td width="200px">
-														<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+														<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2" maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
 												</td>
 											</tr>
 											<tr>
 												<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
 												<td width="80px">积分兑换：</td>
 												<td width="200px">
-														<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+														<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2" maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
 												</td>
 											</tr>
 										</table>		
@@ -490,198 +507,269 @@
 				</table>
 			</form>
 	    </div>
-	    <div title="图片维护" style="padding:20px;">
-		    <table>
-		    	<tr>
-		    		<td>
-		    			<form action="imageUpload" id="fm0" method="post" enctype="multipart/form-data">
-					    	<table>
-						    	<tr>
-									<td width="20px"></td>
-									<td width="80px">基本图片：</td>
-									<td width="200px" align="left">
-										<span id="span0">
-											<input type="file" name="overview" id="file0" accept="image/*" onchange="check(this,'span0')">
-										</span>
-									</td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file0','fm0', 'key0', 'aimage0','image0','divPreview0')">上传</button></td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key0','divPreview0')">删除</button></td>
-									<td>
-										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
-										<input type="hidden" name="key" id="key0" />
-										<input type="hidden" name="imageSessionName" id="imageSessionName_image0" value="${imageSessionName }"/>
-										<div id="divPreview0" >
-											<a id="aimage0" href=""><img id="image0" src=""></a>
-										</div>
-									</td>
-								</tr>
-						    </table>
-					    </form>
-		    		</td>
-		    	</tr>
-		    	<tr>
-		    		<td>
-		    			<form action="imageUpload" id="fm1" method="post" enctype="multipart/form-data">
-					    	<table>
-						    	<tr>
-									<td width="20px"></td>
-									<td width="80px">图片一：</td>
-									<td width="200px" align="left">
-										<span id="span1">
-											<input type="file" name="others" id="file1" accept="image/*" onchange="check(this,'span1')">
-										</span>
-									</td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file1','fm1', 'key1', 'aimage1','image1','divPreview1')">上传</button></td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key1','divPreview1')">删除</button></td>
-									<td>
-										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
-										<input type="hidden" name="key" id="key1" />
-										<input type="hidden" name="imageSessionName" id="imageSessionName_image1" value="${imageSessionName }"/>
-										<div id="divPreview1" >
-											<a id="aimage1" href=""><img id="image1" src=""></a>
-										</div>
-									</td>
-								</tr>
-						    </table>
-					    </form>
-		    		</td>
-		    	</tr>
-		    	<tr>
-		    		<td>
-		    			<form action="imageUpload" id="fm2" method="post" enctype="multipart/form-data">
-					    	<table>
-						    	<tr>
-									<td width="20px"></td>
-									<td width="80px">图片二：</td>
-									<td width="200px" align="left">
-										<span id="span2">
-											<input type="file" name="others" id="file2" accept="image/*" onchange="check(this,'span2')">
-										</span>
-									</td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file2','fm2', 'key2', 'aimage2','image2','divPreview2')">上传</button></td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key2','divPreview2')">删除</button></td>
-									<td>
-										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
-										<input type="hidden" name="key" id="key2" />
-										<input type="hidden" name="imageSessionName" id="imageSessionName_image2" value="${imageSessionName }"/>
-										<div id="divPreview2" >
-											<a id="aimage2" href=""><img id="image2" src=""></a>
-										</div>
-									</td>
-								</tr>
-						    </table>
-					    </form>
-		    		</td>
-		    	</tr>
-		    	<tr>
-		    		<td>
-		    			<form action="imageUpload" id="fm3" method="post" enctype="multipart/form-data">
-					    	<table>
-						    	<tr>
-									<td width="20px"></td>
-									<td width="80px">图片三：</td>
-									<td width="200px" align="left">
-										<span id="span3">
-											<input type="file" name="others" id="file3" accept="image/*" onchange="check(this,'span3')">
-										</span>
-									</td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file3','fm3', 'key3', 'aimage3','image3','divPreview3')">上传</button></td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key3','divPreview3')">删除</button></td>
-									<td>
-										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
-										<input type="hidden" name="key" id="key3" />
-										<input type="hidden" name="imageSessionName" id="imageSessionName_image3" value="${imageSessionName }"/>
-										<div id="divPreview3" >
-											<a id="aimage3" href=""><img id="image3" src=""></a>
-										</div>
-									</td>
-								</tr>
-						    </table>
-					    </form>
-		    		</td>
-		    	</tr>
-		    	<tr>
-		    		<td>
-		    			<form action="imageUpload" id="fm4" method="post" enctype="multipart/form-data">
-					    	<table>
-						    	<tr>
-									<td width="20px"></td>
-									<td width="80px">图片四：</td>
-									<td width="200px" align="left">
-										<span id="span4">
-											<input type="file" name="others" id="file4" accept="image/*" onchange="check(this,'span4')">
-										</span>
-									</td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file4','fm4', 'key4', 'aimage4','image4','divPreview4')">上传</button></td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key4','divPreview4')">删除</button></td>
-									<td>
-										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
-										<input type="hidden" name="key" id="key4" />
-										<input type="hidden" name="imageSessionName" id="imageSessionName_image4" value="${imageSessionName }"/>
-										<div id="divPreview4" >
-											<a id="aimage4" href=""><img id="image4" src=""></a>
-										</div>
-									</td>
-								</tr>
-						    </table>
-					    </form>
-		    		</td>
-		    	</tr>
-		    	<tr>
-		    		<td>
-		    			<form action="imageUpload" id="fm5" method="post" enctype="multipart/form-data">
-					    	<table>
-						    	<tr>
-									<td width="20px"></td>
-									<td width="80px">图片五：</td>
-									<td width="200px" align="left">
-										<span id="span5">
-											<input type="file" name="others" id="file5" accept="image/*" onchange="check(this,'span5')">
-										</span>
-									</td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file5','fm5', 'key5', 'aimage5','image5','divPreview5')">上传</button></td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key5','divPreview5')">删除</button></td>
-									<td>
-										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
-										<input type="hidden" name="key" id="key5" />
-										<input type="hidden" name="imageSessionName" id="imageSessionName_image5"value="${imageSessionName }"/>
-										<div id="divPreview5" >
-											<a id="aimage5" href=""><img id="image5" src=""></a>
-										</div>
-									</td>
-								</tr>
-						    </table>
-					    </form>
-		    		</td>
-		    	</tr>
-		    	<tr>
-		    		<td>
-		    			<form action="imageUpload" id="fm6" method="post" enctype="multipart/form-data">
-					    	<table>
-						    	<tr>
-									<td width="20px"></td>
-									<td width="80px">图片六：</td>
-									<td width="200px" align="left">
-										<span id="span6">
-											<input type="file" name="others" id="file6" accept="image/*" onchange="check(this,'span6')">
-										</span>
-									</td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file6','fm6', 'key6', 'aimage6','image6','divPreview6')">上传</button></td>
-									<td width="80px">&nbsp;&nbsp;<button type="button"  onclick="deleteImage('key6','divPreview6')">删除</button></td>
-									<td>
-										<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
-										<input type="hidden" name="key" id="key6" />
-										<input type="hidden" name="imageSessionName" id="imageSessionName_image6" value="${imageSessionName }"/>
-										<div id="divPreview6" >
-											<a id="aimage6" href=""><img id="image6" src=""></a>
-										</div>
-									</td>
-								</tr>
-						    </table>
-					    </form>
-		    		</td>
-		    	</tr>
-		    </table>
+	    <div title="图片维护" style="padding:20px;text-align:center;">
+	    	<table>
+	    		<tr>
+	    			<td>
+	    				<table>
+	    					<tr><td align="center">基本图片</td></tr>
+				    		<tr>
+				    			<td align="center" style="height:120px;">
+				    				<div id="divPreview0" >
+										<a id="aimage0" href=""><img id="image0" src=""></a><br>
+										<button type="button"  onclick="deleteImage('key0','divPreview0')">删除</button>
+									</div>
+				    			</td>
+				    		</tr>			
+	    				</table>
+	    			</td>
+	    			<td>
+	    				<table>
+	    					<tr><td align="center">图片一</td></tr>
+				    		<tr>
+				    			<td align="center" style="height:120px;">
+				    				<div id="divPreview1" >
+										<a id="aimage1" href=""><img id="image1" src=""></a><br>
+										<button type="button"  onclick="deleteImage('key1','divPreview1')">删除</button>
+									</div>
+				    			</td>
+				    		</tr>			
+	    				</table>
+	    			</td>
+	    			<td>
+	    				<table>
+	    					<tr><td align="center">图片二</td></tr>
+				    		<tr>
+				    			<td align="center" style="height:120px;">
+				    				<div id="divPreview2" >
+										<a id="aimage2" href=""><img id="image2" src=""></a><br>
+										<button type="button"  onclick="deleteImage('key2','divPreview2')">删除</button>
+									</div>
+				    			</td>
+				    		</tr>			
+	    				</table>
+	    			</td>
+	    			<td>
+	    				<table>
+	    					<tr><td align="center">图片三</td></tr>
+				    		<tr>
+				    			<td align="center" style="height:120px;">
+				    				<div id="divPreview3" >
+										<a id="aimage3" href=""><img id="image3" src=""></a><br>
+										<button type="button"  onclick="deleteImage('key3','divPreview3')">删除</button>
+									</div>
+				    			</td>
+				    		</tr>			
+	    				</table>
+	    			</td>
+	    			<td>
+	    				<table>
+	    					<tr><td align="center">图片四</td></tr>
+				    		<tr>
+				    			<td align="center" style="height:120px;">
+				    				<div id="divPreview4" >
+										<a id="aimage4" href=""><img id="image4" src=""></a><br>
+										<button type="button"  onclick="deleteImage('key4','divPreview4')">删除</button>
+									</div>
+				    			</td>
+				    		</tr>			
+	    				</table>
+	    			</td>
+	    			<td>
+	    				<table>
+	    					<tr><td align="center">图片五</td></tr>
+				    		<tr>
+				    			<td align="center" style="height:120px;">
+				    				<div id="divPreview5" >
+										<a id="aimage5" href=""><img id="image5" src=""></a><br>
+										<button type="button"  onclick="deleteImage('key5','divPreview5')">删除</button>
+									</div>
+				    			</td>
+				    		</tr>			
+	    				</table>
+	    			</td>
+	    			<td>
+	    				<table>
+	    					<tr><td align="center">图片六</td></tr>
+				    		<tr>
+				    			<td align="center" style="height:120px;">
+				    				<div id="divPreview6" >
+										<a id="aimage6" href=""><img id="image6" src=""></a><br>
+										<button type="button"  onclick="deleteImage('key6','divPreview6')">删除</button>
+									</div>
+				    			</td>
+				    		</tr>			
+	    				</table>
+	    			</td>
+	    		</tr>
+	    		<tr>
+	    			<td align="center" colspan="6">
+	    				<button type="button" onclick="openAddIamgeDialog()">上传图片</button>
+	    			</td>
+	    		</tr>
+	    	</table>
+	    	<div id="addImage" class="easyui-dialog" title="上传图片" style="width:600px;height:400px;"  
+		        data-options="resizable:true,modal:true,inline:false,closed:true">
+			        <div style="text-align:center;">
+			        	<table>
+							<tr>
+								<td>
+									<form action="imageUpload" id="fm0" method="post" enctype="multipart/form-data">
+								    	<table>
+									    	<tr>
+												<td width="20px"></td>
+												<td width="80px">基本图片：</td>
+												<td width="200px" align="left">
+													<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+													<input type="hidden" name="key" id="key0" />
+													<input type="hidden" name="imageSessionName" id="imageSessionName_image0" value="${imageSessionName }">
+													<span id="span0">
+														<input type="file" name="overview" id="file0" accept="image/*" onchange="check(this,'span0')">
+													</span>
+												</td>
+												<td align="right">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file0','fm0', 'key0', 'aimage0','image0','divPreview0')">上传</button></td>
+											</tr>
+										</table>
+									</form>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<form action="imageUpload" id="fm1" method="post" enctype="multipart/form-data">
+								    	<table>
+									    	<tr>
+												<td width="20px"></td>
+												<td width="80px">图片一：</td>
+												<td width="200px" align="left">
+													<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+													<input type="hidden" name="key" id="key1" />
+													<input type="hidden" name="imageSessionName" id="imageSessionName_image1" value="${imageSessionName }">
+													<span id="span1">
+														<input type="file" name="others" id="file1" accept="image/*" onchange="check(this,'span1')">
+													</span>
+												</td>
+												<td align="right">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file1','fm1', 'key1', 'aimage1','image1','divPreview1')">上传</button></td>
+											</tr>
+										</table>
+									</form>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<form action="imageUpload" id="fm2" method="post" enctype="multipart/form-data">
+								    	<table>
+									    	<tr>
+												<td width="20px"></td>
+												<td width="80px">图片二：</td>
+												<td width="200px" align="left">
+													<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+													<input type="hidden" name="key" id="key2" />
+													<input type="hidden" name="imageSessionName" id="imageSessionName_image2" value="${imageSessionName }">
+													<span id="span2">
+														<input type="file" name="others" id="file2" accept="image/*" onchange="check(this,'span2')">
+													</span>
+												</td>
+												<td align="right">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file2','fm2', 'key2', 'aimage2','image2','divPreview2')">上传</button></td>
+											</tr>
+										</table>
+									</form>
+								</td>
+							</tr>	
+							<tr>
+								<td>
+									<form action="imageUpload" id="fm3" method="post" enctype="multipart/form-data">
+								    	<table>
+									    	<tr>
+												<td width="20px"></td>
+												<td width="80px">图片三：</td>
+												<td width="200px" align="left">
+													<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+													<input type="hidden" name="key" id="key3" />
+													<input type="hidden" name="imageSessionName" id="imageSessionName_image3" value="${imageSessionName }">
+													<span id="span3">
+														<input type="file" name="others" id="file3" accept="image/*" onchange="check(this,'span3')">
+													</span>
+												</td>
+												<td align="right">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file3','fm3', 'key3', 'aimage3','image3','divPreview3')">上传</button></td>
+											</tr>	
+										</table>
+									</form>
+								</td>
+							</tr>	
+							<tr>
+								<td>
+									<form action="imageUpload" id="fm4" method="post" enctype="multipart/form-data">
+								    	<table>
+									    	<tr>
+												<td width="20px"></td>
+												<td width="80px">图片四：</td>
+												<td width="200px" align="left">
+													<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+													<input type="hidden" name="key" id="key4" />
+													<input type="hidden" name="imageSessionName" id="imageSessionName_image4" value="${imageSessionName }">
+													<span id="span4">
+														<input type="file" name="others" id="file4" accept="image/*" onchange="check(this,'span4')">
+													</span>
+												</td>
+												<td align="right">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file4','fm4', 'key4', 'aimage4','image4','divPreview4')">上传</button></td>
+											</tr>	
+										</table>
+									</form>
+								</td>
+							</tr>	
+							<tr>
+								<td>
+									<form action="imageUpload" id="fm5" method="post" enctype="multipart/form-data">
+								    	<table>
+									    	<tr>
+												<td width="20px"></td>
+												<td width="80px">图片五：</td>
+												<td width="200px" align="left">
+													<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+													<input type="hidden" name="key" id="key5" />
+													<input type="hidden" name="imageSessionName" id="imageSessionName_image5" value="${imageSessionName }">
+													<span id="span5">
+														<input type="file" name="others" id="file5" accept="image/*" onchange="check(this,'span5')">
+													</span>
+												</td>
+												<td align="right">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file5','fm5', 'key5', 'aimage5','image5','divPreview5')">上传</button></td>
+											</tr>	
+										</table>
+									</form>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<form action="imageUpload" id="fm6" method="post" enctype="multipart/form-data">
+								    	<table>
+									    	<tr>
+												<td width="20px"></td>
+												<td width="80px">图片六：</td>
+												<td width="200px" align="left">
+													<input type="hidden" name="path" value="MERCHANDISE_IMAGE_BUFFER">
+													<input type="hidden" name="key" id="key6" />
+													<input type="hidden" name="imageSessionName" id="imageSessionName_image6" value="${imageSessionName }">
+													<span id="span6">
+														<input type="file" name="others" id="file6" accept="image/*" onchange="check(this,'span6')">
+													</span>
+												</td>
+												<td align="right">&nbsp;&nbsp;<button type="button"  onclick="uploadImage('file6','fm6', 'key6', 'aimage6','image6','divPreview6')">上传</button></td>
+											</tr>	
+										</table>
+									</form>
+								</td>
+							</tr>	
+							<tr>
+								<td align="right">
+									<button type="button" onclick="closeAddIamgeDialog()">关闭</button>
+								</td>
+							</tr>	        		
+			        	</table>
+		        </div>
+			</div>
+		    <div id="divDialog">
+		    	<iframe scrolling="auto" id='openIframe' name="openIframe" frameborder="0"  src="" style="width:100%;height:100%;overflow: hidden;"></iframe> 
+			</div>
 	    </div>
 	</div>
 	<div id="imageDia" class="easyui-dialog" title="图片预览" style="width:400px;height:400px;"  
@@ -697,8 +785,5 @@
         	<button type="button" onclick="selectCategory()">确定</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="javascript:$('#dd').dialog('close');">关闭</button>
         </div>
 	</div> 
-	<div id="divDialog">
-    	<iframe scrolling="auto" id='openIframe' name="openIframe" frameborder="0"  src="" style="width:100%;height:100%;overflow: hidden;"></iframe> 
-	</div>
 </body>
 </html>

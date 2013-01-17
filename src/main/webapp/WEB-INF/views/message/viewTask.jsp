@@ -32,6 +32,10 @@ $(function(){
 	 $('#ft').css("display","none");
 	 $('#allt').attr("style","display:none");
 	 
+	 if(${task.taskStates}!=2){
+		 $('#againSend').attr("style","display:none");
+	 }
+	 
 	 //状态值
 	  var status = ${statusJson};
 	    for(var i=0;i<status.length;i++){
@@ -101,7 +105,7 @@ function sendResult(v){
 </head>
 <body>
 	
-	<div id="tt" class="easyui-tabs" style="height:400px;width:460px;margin:10px;" > 
+	<div id="tt" class="easyui-tabs" style="height:400px;margin:10px;" > 
      
             <table  border="0" style="padding: 20px;">
 			<tr>
@@ -124,7 +128,7 @@ function sendResult(v){
 				    <input type="radio" id="planSend" name="sendType" value="2" /> 计划发送时间 
 				</td>
 			    <td>
-			      <input id="planSendDate" name="planSendDate" value="${task.planSendTime}" type="text" style="width:150px" class="easyui-datebox" />
+			      <input id="planSendDate" name="planSendDate" value="${task.planSendTime}" disabled="true" type="text" style="width:150px" class="easyui-datebox" />
 			       <input type="hidden"  id="senddate" name="planSendDate" value="${task.planSendTime}" />
 			    </td>
 			</tr>
@@ -153,11 +157,11 @@ function sendResult(v){
 				</td>
 			</tr>
 			<tr>
-				<td align="center" colspan="4">
+				<td style="margin-right:20px;" >
 				  <button type="button" onclick="viewfailure();"> 查看失败号码
 				  </button>
 				</td>
-				<td align="center" colspan="4">
+				<td style="margin-right:20px;">
 				    <button type="button" onclick="viewAll();">  查看全部号码
 				    </button>
 				</td>
@@ -170,7 +174,7 @@ function sendResult(v){
 	
 	
 	<div id="allt">  
-	<div>${task.taskName}任务所有电话列表：</div>
+	<div>${task.taskName}任务--所有电话列表：</div>
 	  <table id="atable" class="easyui-datagrid" data-options="rownumbers:true,url:'listTel?taskid=${task.taskId}',fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
 		rownumbers:true,pageList:pageList,singleSelect:true">
 	    <thead>  
@@ -184,7 +188,7 @@ function sendResult(v){
 	</div>
 	
 	<div id="ft" >  
-	<div>${task.taskName}任务所有发送失败电话列表：</div>
+	<div>${task.taskName}任务--发送失败电话列表：</div>
 	 <table id="ftable" class="easyui-datagrid" data-options="rownumbers:true,url:'failureTel?taskid=${task.taskId}',fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
 		rownumbers:true,pageList:pageList,singleSelect:true">
 	    <thead>  
@@ -197,7 +201,7 @@ function sendResult(v){
 	 </table> 
 	  <div style="text-align:left;">
   			<br>
-  			<button type="button" onclick="newSend();" id="view">重新发送</button>&nbsp;&nbsp;&nbsp;&nbsp;
+  			<button type="button" onclick="newSend();" id="againSend">重新发送</button>&nbsp;&nbsp;&nbsp;&nbsp;
 	</div>
 	</div>
 </body>

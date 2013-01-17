@@ -23,6 +23,13 @@ function getStatus(v){
         };
     };
 }
+
+$(function(){
+
+	
+})
+
+
 </script>
 
 </head>
@@ -51,8 +58,8 @@ function getStatus(v){
 
 	    
 	<!-- 显示列表Table -->
-	<table id="table" class="easyui-datagrid" data-options="rownumbers:true,url:'listMessagesTask',fitColumns:true,loadMsg:'正在载入...',pagination:true,
-		pageList:pageList,singleSelect:true,onClickRow:function(rowIndex,rowData){checkSelect(rowData.taskId,rowData.taskStates);}">
+	<table id="table" class="easyui-datagrid"  data-options="rownumbers:true,url:'listMessagesTask',fitColumns:true,loadMsg:'正在载入...',pagination:true,
+		pageList:pageList,singleSelect:true,onSelect:function(rowIndex,rowData){checkSelect(rowData.taskId,rowData.taskStates);}">
 	    <thead>  
 	        <tr>  
 	            <th data-options="field:'taskId',checkbox:true"></th>
@@ -81,6 +88,7 @@ function getStatus(v){
 	</div>
 
 <script type="text/javascript">
+
 
 function searchs(){
     //load 加载数据分页从第一页开始, reload 从当前页开始

@@ -22,15 +22,20 @@
 		if(stateCompera(v,o,i) == '已取消' || stateCompera(v,o,i) == '已结束'){
 			$('#updateAct').attr("disabled","true"); 
 			$('#cancerAct').attr("disabled","true"); 
-		}else if(stateCompera(v,o,i) == '未开始'||stateCompera(v,o,i) == '进行中'){
+			$('#deleteAct').removeAttr("disabled");
+		}else if(stateCompera(v,o,i) == '未开始'){
 			$('#updateAct').removeAttr("disabled"); 
 			$('#cancerAct').removeAttr("disabled"); 
 			$('#deleteAct').removeAttr("disabled");
+		}else if(stateCompera(v,o,i) == '进行中'){
+			$('#deleteAct').attr("disabled","true"); 
 		}
 	} 
 	
 	$(document).ready(function(){
-		
+		$('#updateAct').attr("disabled","true"); 
+		$('#cancerAct').attr("disabled","true");
+		$('#deleteAct').attr("disabled","true");
 		$('#searchbtn').click(function(){
 			$('#table1').datagrid('load',getForms("searchForm"));
 		});
@@ -45,11 +50,19 @@
 		});
 		
 		$('#deleteAct').click(function(){
-			var data ='';
+			var data ='';var v ;var flag = false ;
 			var rows = $('#table1').datagrid('getChecked');
 			
 			for(var i in rows){
 				data += rows[i].id+',';
+				if(stateCompera(v,rows[i],i) == '进行中'){
+					flag = true ;
+					break ;
+				}
+			}
+			if(flag){
+				$('#deleteAct').attr("disabled","true"); 
+				return false ;
 			}
 			data = data.substring(0, data.length -1);
 			if(rows.length == 0){

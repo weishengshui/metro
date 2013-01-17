@@ -24,6 +24,8 @@ public interface IMemberService {
 	 * @param member
 	 */
 	public Member saveMember(Member member);
+	
+	public Member saveT(Member member);
 
 	/**
 	 * 修改会员信息

@@ -34,10 +34,11 @@ public class FileItem implements Serializable {
 
 	private String originalFilename;
 
-	private long filesize;
+	private Long filesize;
 
-	private int width;
-	private int height;
+	private Integer width;
+	
+	private Integer height;
 
 	private String url;
 
@@ -124,7 +125,7 @@ public class FileItem implements Serializable {
 	 * 
 	 * @return the file size in bytes.
 	 */
-	public long getFilesize() {
+	public Long getFilesize() {
 		return filesize;
 	}
 
@@ -134,19 +135,19 @@ public class FileItem implements Serializable {
 	 * @param filesize
 	 *            the file size to set
 	 */
-	public void setFilesize(long filesize) {
+	public void setFilesize(Long filesize) {
 		this.filesize = filesize;
 	}
 
-	public int getWidth() {
+	public Integer getWidth() {
 		return width;
 	}
 
-	public void setWidth(int width) {
+	public void setWidth(Integer width) {
 		this.width = width;
 	}
 
-	public int getHeight() {
+	public Integer getHeight() {
 		return height;
 	}
 

@@ -1,6 +1,9 @@
-package com.chinarewards.metro.domain.merchandise;
+package com.chinarewards.metro.model.merchandise;
+
+import java.util.Date;
 
 import com.chinarewards.metro.domain.category.Category;
+import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
 
 /**
  * 
@@ -8,16 +11,26 @@ import com.chinarewards.metro.domain.category.Category;
  * 
  */
 public class CategoryVo {
-	
+
 	private Category category;
 	private String categoryId;
+	private String merchandiseId;
 	private String merCode;
 	private MerchandiseStatus status;
+	private Date on_offTime;
 	private Long displaySort;
 	private String fullName;// 类别全名
 
 	public CategoryVo() {
-		// TODO Auto-generated constructor stub
+	}
+
+	public CategoryVo(String categoryId, MerchandiseStatus status,
+			Date on_offTime, Long displaySort, String merchandiseId) {
+		this.categoryId = categoryId;
+		this.status = status;
+		this.on_offTime = on_offTime;
+		this.displaySort = displaySort;
+		this.merchandiseId = merchandiseId;
 	}
 
 	public CategoryVo(String merCode, MerchandiseStatus status, Long displaySort) {
@@ -58,6 +71,14 @@ public class CategoryVo {
 		this.status = status;
 	}
 
+	public Date getOn_offTime() {
+		return on_offTime;
+	}
+
+	public void setOn_offTime(Date on_offTime) {
+		this.on_offTime = on_offTime;
+	}
+
 	public Long getDisplaySort() {
 		return displaySort;
 	}
@@ -65,12 +86,6 @@ public class CategoryVo {
 	public void setDisplaySort(Long displaySort) {
 		this.displaySort = displaySort;
 	}
-
-//	@Override
-//	public String toString() {
-//		return "[categoryId=" + categoryId + ", status=" + status
-//				+ ", displaySort=" + displaySort + ", fullName="+fullName+ "]";
-//	}
 
 	public String getMerCode() {
 		return merCode;
@@ -95,7 +110,13 @@ public class CategoryVo {
 	public void setCategory(Category category) {
 		this.category = category;
 	}
-	
-	
+
+	public String getMerchandiseId() {
+		return merchandiseId;
+	}
+
+	public void setMerchandiseId(String merchandiseId) {
+		this.merchandiseId = merchandiseId;
+	}
 
 }

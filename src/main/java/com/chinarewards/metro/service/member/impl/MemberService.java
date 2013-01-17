@@ -58,6 +58,13 @@ public class MemberService implements IMemberService {
 	}
 
 	@Override
+	public Member saveT(Member member) {
+		Account account = accountService.createAccount("");
+		member.setAccount(account != null ? account.getAccountId() : "");
+		member.setStatus(Dictionary.MEMBER_STATE_NOACTIVATE);
+		return hbDaoSupport.save(member);
+	}
+	@Override
 	public void sendActivationCode(Integer memeberId, String phone) {
 		Long l = Math.round(Math.random() * 899999 + 190000);
 		String c = "验证码: " + l.toString() + " 【积享通技术有限公司】";

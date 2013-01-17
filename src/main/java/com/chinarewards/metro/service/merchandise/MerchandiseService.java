@@ -13,12 +13,14 @@ import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.core.common.UserContext;
 import com.chinarewards.metro.domain.category.Category;
 import com.chinarewards.metro.domain.merchandise.CatalogVo;
-import com.chinarewards.metro.domain.merchandise.CategoryVo;
 import com.chinarewards.metro.domain.merchandise.Merchandise;
 import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
+import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
 import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
+import com.chinarewards.metro.model.merchandise.CategoryVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
+import com.chinarewards.metro.model.merchandise.SaleFormVo;
 
 @Service
 public class MerchandiseService implements IMerchandiseService {
@@ -80,7 +82,7 @@ public class MerchandiseService implements IMerchandiseService {
 
 	@Override
 	public void createMerchandise(Merchandise merchandise,
-			List<MerchandiseFile> files, List<CatalogVo> catalogVos,
+			List<MerchandiseFile> files, List<SaleFormVo> saleFormVos,
 			List<CategoryVo> categoryVos) {
 		merchandise.setCreatedAt(SystemTimeProvider.getCurrentTime());
 		merchandise.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
@@ -88,44 +90,55 @@ public class MerchandiseService implements IMerchandiseService {
 		merchandise.setLastModifiedBy(UserContext.getUserId());
 		hbDaoSupport.save(merchandise);
 
+		// sale merchandise files
 		if (null != files && files.size() > 0) {
 			for (MerchandiseFile file : files) {
 				file.setMerchandise(merchandise);
 				hbDaoSupport.save(file);
 			}
 		}
-		if (null != catalogVos && catalogVos.size() > 0) {
-			for (CatalogVo catalogVo : catalogVos) {
-				MerchandiseCatalog catalog = new MerchandiseCatalog();
-				catalog.setCreatedAt(SystemTimeProvider.getCurrentTime());
-				catalog.setCreatedBy(UserContext.getUserId());
-				catalog.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-				catalog.setLastModifiedBy(UserContext.getUserId());
-				catalog.setMerchandise(merchandise);
-				catalog.setPrice(catalogVo.getPrice());
-				catalog.setUnitId(catalogVo.getUnitId());
-				hbDaoSupport.save(catalog);
+
+		// save merchandise sale forms
+		if (null != saleFormVos && saleFormVos.size() > 0) {
+			for (SaleFormVo saleFormVo : saleFormVos) {
+				MerchandiseSaleform merchandiseSaleform = new MerchandiseSaleform();
+
+				merchandiseSaleform.setCreatedAt(SystemTimeProvider
+						.getCurrentTime());
+				merchandiseSaleform.setCreatedBy(UserContext.getUserId());
+				merchandiseSaleform.setLastModifiedAt(SystemTimeProvider
+						.getCurrentTime());
+				merchandiseSaleform.setLastModifiedBy(UserContext.getUserId());
+				merchandiseSaleform.setMerchandise(merchandise);
+				merchandiseSaleform.setPreferentialPrice(saleFormVo
+						.getPreferentialPrice());
+				merchandiseSaleform.setPrice(saleFormVo.getPrice());
+				merchandiseSaleform.setUnitId(saleFormVo.getUnitId());
+
+				hbDaoSupport.save(merchandiseSaleform);
 			}
-			for (CatalogVo catalogVo : catalogVos) {
-				MerchandiseCatalog catalog = new MerchandiseCatalog();
-				catalog.setCreatedAt(SystemTimeProvider.getCurrentTime());
-				catalog.setCreatedBy(UserContext.getUserId());
-				catalog.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-				catalog.setLastModifiedBy(UserContext.getUserId());
-				catalog.setMerchandise(merchandise);
-				catalog.setPrice(catalogVo.getPrice());
-				catalog.setUnitId(catalogVo.getUnitId());
-				if (null != categoryVos && categoryVos.size() > 0) {
-					for (CategoryVo categoryVo : categoryVos) {
-						Category category = hbDaoSupport.findTById(
-								Category.class, categoryVo.getCategoryId());
-						if (null != category) { // 为安全起见
-							catalog.setCategory(category);
-							catalog.setDisplaySort(categoryVo.getDisplaySort());
-							catalog.setStatus(categoryVo.getStatus());
-							hbDaoSupport.save(catalog);
-						}
-					}
+		}
+
+		// save merchandise catalogs
+		if (null != categoryVos && categoryVos.size() > 0) {
+			for (CategoryVo categoryVo : categoryVos) {
+				Category category = hbDaoSupport.findTById(Category.class,
+						categoryVo.getCategoryId());
+				if (null != category) { // 为安全起见
+					MerchandiseCatalog catalog = new MerchandiseCatalog();
+
+					catalog.setCategory(category);
+					catalog.setCreatedAt(SystemTimeProvider.getCurrentTime());
+					catalog.setCreatedBy(UserContext.getUserId());
+					catalog.setDisplaySort(categoryVo.getDisplaySort());
+					catalog.setLastModifiedAt(SystemTimeProvider
+							.getCurrentTime());
+					catalog.setLastModifiedBy(UserContext.getUserId());
+					catalog.setMerchandise(merchandise);
+					catalog.setOn_offTIme(categoryVo.getOn_offTime());
+					catalog.setStatus(categoryVo.getStatus());
+
+					hbDaoSupport.save(catalog);
 				}
 			}
 		}
@@ -164,7 +177,7 @@ public class MerchandiseService implements IMerchandiseService {
 
 		String categoryId = categoryVo.getCategoryId();
 		Long displaySort = categoryVo.getDisplaySort();
-		String merCode = categoryVo.getMerCode();
+		String merchandiseId = categoryVo.getMerchandiseId();
 
 		MerchandiseCatalog catalog = hbDaoSupport
 				.findTByHQL(
@@ -173,7 +186,7 @@ public class MerchandiseService implements IMerchandiseService {
 		if (null == catalog) {
 			return false;
 		}
-		if (catalog.getMerchandise().getCode().equals(merCode)) {
+		if (catalog.getMerchandise().getId().equals(merchandiseId)) {
 			return false;
 		}
 		return true;
@@ -222,54 +235,32 @@ public class MerchandiseService implements IMerchandiseService {
 	}
 
 	@Override
-	public String checkMerchCataHasCategory(String cataId) {
-
-		MerchandiseCatalog catalog = hbDaoSupport.findTById(
-				MerchandiseCatalog.class, cataId);
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("merchandise", catalog.getMerchandise());
-		params.put("unitId", catalog.getUnitId());
-		List<Long> count = hbDaoSupport
-				.executeQuery(
-						"SELECT COUNT(m) FROM MerchandiseCatalog m WHERE m.merchandise=:merchandise AND m.unitId=:unitId AND m.category IS NOT null",
-						params, null);
-		if (null != count && count.size() > 0) { // 该兑换类型与商品类别有关联，不能删除
-			if (count.get(0) > 0) {
-				return catalog.getMerchandise().getCode();
-			}
-		}
-		return null;
-	}
-
-	@Override
 	public void batchDelete(String[] ids) {
 		for (String id : ids) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			map.put("id", id);
-			MerchandiseCatalog catalog = hbDaoSupport.findTById(
-					MerchandiseCatalog.class, id);
-			Merchandise merchandise = catalog.getMerchandise();
-			hbDaoSupport
-					.executeHQL(
-							"DELETE MerchandiseCatalog m WHERE m.merchandise=? and m.unitId=?",
-							new Object[] { catalog.getMerchandise(),
-									catalog.getUnitId() });
-			// hbDaoSupport.getHibernateTemplate().clear();
-			if (merchandise.getMerchandiseCatalogs() != null
-					&& merchandise.getMerchandiseCatalogs().size() == 0) {
-				map = new HashMap<String, Object>();
-				map.put("id", merchandise.getId());
-				List<MerchandiseFile> files = hbDaoSupport.executeQuery(
-						"FROM MerchandiseFile m WHERE m.merchandise.id=:id",
-						map, null);
-				if (null != files && files.size() > 0) {
-					// 先删除商品对应的图片
-					// TODO 物理删除图片
-					// 删除数据库记录
-					hbDaoSupport.deleteAll(files);
-				}
-				hbDaoSupport.executeHQL("DELETE Merchandise WHERE id=:id", map);
-			}
+			Merchandise merchandise = hbDaoSupport.findTById(Merchandise.class,
+					id);
+
+			hbDaoSupport.executeHQL(
+					"DELETE MerchandiseSaleform m WHERE m.merchandise=? ",
+					merchandise);
+			hbDaoSupport.executeHQL(
+					"DELETE MerchandiseFile m WHERE m.merchandise=? ",
+					merchandise);
+			hbDaoSupport.delete(merchandise);
+
+			/*
+			 * if (merchandise.getMerchandiseCatalogs() != null &&
+			 * merchandise.getMerchandiseCatalogs().size() == 0) { map = new
+			 * HashMap<String, Object>(); map.put("id", merchandise.getId());
+			 * List<MerchandiseFile> files = hbDaoSupport.executeQuery(
+			 * "FROM MerchandiseFile m WHERE m.merchandise.id=:id", map, null);
+			 * if (null != files && files.size() > 0) { // 先删除商品对应的图片 // TODO
+			 * 物理删除图片 // 删除数据库记录 hbDaoSupport.deleteAll(files); }
+			 * hbDaoSupport.executeHQL("DELETE Merchandise WHERE id=:id", map);
+			 * }
+			 */
 
 		}
 
@@ -301,32 +292,27 @@ public class MerchandiseService implements IMerchandiseService {
 
 	@Override
 	public void updateMerchandise(Merchandise merchandise,
-			List<MerchandiseFile> files, List<CatalogVo> catalogVos,
+			List<MerchandiseFile> files, List<SaleFormVo> saleFormVos,
 			List<CategoryVo> categoryVos) {
 
-		Merchandise merchandiseFromDB = hbDaoSupport.findTById(Merchandise.class, merchandise.getId());
+		Merchandise merchandiseFromDB = hbDaoSupport.findTById(
+				Merchandise.class, merchandise.getId());
 		merchandiseFromDB.setName(merchandise.getName());
 		merchandiseFromDB.setCode(merchandise.getCode());
 		merchandiseFromDB.setPurchasePrice(merchandise.getPurchasePrice());
 		merchandiseFromDB.setModel(merchandise.getModel());
 		merchandiseFromDB.setDescription(merchandise.getDescription());
-		merchandiseFromDB.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+		merchandiseFromDB
+				.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
 		merchandiseFromDB.setLastModifiedBy(UserContext.getUserId());
 		hbDaoSupport.update(merchandiseFromDB);
 
-		// delete file
-		hbDaoSupport.executeHQL("DELETE MerchandiseFile m WHERE m.merchandise=?", merchandiseFromDB);
-		/*Map<String, Object> map = new HashMap<String, Object>();
-		map.put("id", merchandise.getId());
-		List<MerchandiseFile> filesFromDb = hbDaoSupport.executeQuery(
-				"FROM MerchandiseFile m WHERE m.merchandise.id=:id", map,
-				null);
-		if (null != filesFromDb && filesFromDb.size() > 0) {
-			hbDaoSupport.deleteAll(filesFromDb);
-		}*/
-		
-		
-		// save file
+		// delete old merchandise files
+		hbDaoSupport.executeHQL(
+				"DELETE MerchandiseFile m WHERE m.merchandise=?",
+				merchandiseFromDB);
+
+		// save files
 		if (null != files && files.size() > 0) {
 			for (MerchandiseFile file : files) {
 				file.setMerchandise(merchandiseFromDB);
@@ -334,119 +320,55 @@ public class MerchandiseService implements IMerchandiseService {
 			}
 		}
 
-		// delete old data
-		hbDaoSupport
-				.executeHQL(
-						"DELETE MerchandiseCatalog m WHERE m.merchandise=? AND m.category IS NOT null",
-						merchandise);
-		// insert new data
-		if (null != catalogVos && catalogVos.size() > 0) {
-			for (CatalogVo catalogVo : catalogVos) {
-				MerchandiseCatalog catalog = new MerchandiseCatalog();
-				catalog.setCreatedAt(SystemTimeProvider.getCurrentTime());
-				catalog.setCreatedBy(UserContext.getUserId());
-				catalog.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-				catalog.setLastModifiedBy(UserContext.getUserId());
-				catalog.setMerchandise(merchandise);
-				catalog.setPrice(catalogVo.getPrice());
-				catalog.setUnitId(catalogVo.getUnitId());
-				if (null != categoryVos && categoryVos.size() > 0) {
-					for (CategoryVo categoryVo : categoryVos) {
-						Category category = hbDaoSupport.findTById(
-								Category.class, categoryVo.getCategoryId());
-						if (null != category) { // 为安全起见
-							catalog.setCategory(category);
-							catalog.setDisplaySort(categoryVo.getDisplaySort());
-							catalog.setStatus(categoryVo.getStatus());
-							hbDaoSupport.save(catalog);
-						}
-					}
-				}
+		// delete merchandise sale form
+		hbDaoSupport.executeHQL(
+				"DELETE MerchandiseSaleform WHERE merchandise=?",
+				merchandiseFromDB);
+		// save merchandise sale from
+		if (null != saleFormVos && saleFormVos.size() > 0) {
+			for (SaleFormVo saleFormVo : saleFormVos) {
+				MerchandiseSaleform saleform = new MerchandiseSaleform();
+
+				saleform.setCreatedAt(SystemTimeProvider.getCurrentTime());
+				saleform.setCreatedBy(UserContext.getUserId());
+				saleform.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+				saleform.setLastModifiedBy(UserContext.getUserId());
+				saleform.setMerchandise(merchandiseFromDB);
+				saleform.setPreferentialPrice(saleFormVo.getPreferentialPrice());
+				saleform.setPrice(saleFormVo.getPrice());
+				saleform.setUnitId(saleFormVo.getUnitId());
+
+				hbDaoSupport.save(saleform);
 			}
 		}
 
-		// if (null != catalogVos && catalogVos.size() > 0) {
-		// for (CatalogVo catalogVo : catalogVos) {
-		//
-		// Map<String, Object> map = new HashMap<String, Object>();
-		// map.put("id", merchandise.getId());
-		// map.put("unitId", catalogVo.getUnitId());
-		// map.put("price", catalogVo.getPrice());
-		// map.put("lastModifiedBy", UserContext.getUserId());
-		// map.put("lastModifiedAt", SystemTimeProvider.getCurrentTime());
-		//
-		// Integer count = hbDaoSupport
-		// .executeHQL(
-		// "UPDATE MerchandiseCatalog m SET m.price=:price, m.lastModifiedBy=:lastModifiedBy, m.lastModifiedAt=:lastModifiedAt WHERE m.merchandise.id=:id AND m.unitId=:unitId",
-		// map);
-		// if (count > 0) {// 商品目录存在则更新
-		//
-		// } else {// 商品目录不存在则创建
-		// MerchandiseCatalog catalog = new MerchandiseCatalog();
-		// catalog.setCreatedAt(SystemTimeProvider.getCurrentTime());
-		// catalog.setCreatedBy(UserContext.getUserId());
-		// catalog.setLastModifiedAt(SystemTimeProvider
-		// .getCurrentTime());
-		// catalog.setLastModifiedBy(UserContext.getUserId());
-		// catalog.setMerchandise(merchandise);
-		// catalog.setPrice(catalogVo.getPrice());
-		// catalog.setUnitId(catalogVo.getUnitId());
-		// hbDaoSupport.save(catalog);
-		// }
-		// }
-		// }
-		//
-		// // update merchandise category
-		// if (null != categoryVos && categoryVos.size() > 0) {
-		// for (CategoryVo categoryVo : categoryVos) {
-		// Map<String, Object> map = new HashMap<String, Object>();
-		// Category category = hbDaoSupport.findTById(Category.class,
-		// categoryVo.getCategoryId());
-		// if (null != category) {
-		// map.put("category", category);
-		// map.put("merCode", categoryVo.getMerCode());
-		// map.put("displaySort", categoryVo.getDisplaySort());
-		// map.put("status", categoryVo.getStatus());
-		// map.put("lastModifiedAt",
-		// SystemTimeProvider.getCurrentTime());
-		// map.put("lastModifiedBy", UserContext.getUserId());
-		// Integer count = hbDaoSupport
-		// .executeHQL(
-		// "UPDATE MerchandiseCatalog m SET m.displaySort=:displaySort, m.status=:status, m.lastModifiedBy=:lastModifiedBy, m.lastModifiedAt=:lastModifiedAt WHERE m.merchandise.code=:merCode AND m.category=:category",
-		// map);
-		// if (count > 0) { // update
-		// } else {// insert
-		// if (null != catalogVos && catalogVos.size() > 0) {
-		// for (CatalogVo catalogVo : catalogVos) {
-		// Map<String, Object> map2 = new HashMap<String, Object>();
-		// map2.put("id", merchandise.getId());
-		// map2.put("unitId", catalogVo.getUnitId());
-		// map2.put("price", catalogVo.getPrice());
-		// map2.put("lastModifiedBy",
-		// UserContext.getUserId());
-		// map2.put("lastModifiedAt",
-		// SystemTimeProvider.getCurrentTime());
-		//
-		// MerchandiseCatalog catalog = new MerchandiseCatalog();
-		// catalog.setCreatedAt(SystemTimeProvider
-		// .getCurrentTime());
-		// catalog.setCreatedBy(UserContext.getUserId());
-		// catalog.setLastModifiedAt(SystemTimeProvider
-		// .getCurrentTime());
-		// catalog.setLastModifiedBy(UserContext
-		// .getUserId());
-		// catalog.setMerchandise(merchandise);
-		// catalog.setCategory(category);
-		// catalog.setPrice(catalogVo.getPrice());
-		// catalog.setUnitId(catalogVo.getUnitId());
-		// hbDaoSupport.save(catalog);
-		// }
-		// }
-		//
-		// }
-		// }
-		// }
-		// }
+		// delete catalogs
+		hbDaoSupport.executeHQL(
+				"DELETE MerchandiseCatalog m WHERE m.merchandise=? ",
+				merchandiseFromDB);
+		// save catalogs
+		if (null != categoryVos && categoryVos.size() > 0) {
+			for (CategoryVo categoryVo : categoryVos) {
+				Category category = hbDaoSupport.findTById(Category.class,
+						categoryVo.getCategoryId());
+				if (null != category) { // 为安全起见
+					MerchandiseCatalog catalog = new MerchandiseCatalog();
+
+					catalog.setCategory(category);
+					catalog.setCreatedAt(SystemTimeProvider.getCurrentTime());
+					catalog.setCreatedBy(UserContext.getUserId());
+					catalog.setDisplaySort(categoryVo.getDisplaySort());
+					catalog.setLastModifiedAt(SystemTimeProvider
+							.getCurrentTime());
+					catalog.setLastModifiedBy(UserContext.getUserId());
+					catalog.setMerchandise(merchandiseFromDB);
+					catalog.setOn_offTIme(categoryVo.getOn_offTime());
+					catalog.setStatus(categoryVo.getStatus());
+
+					hbDaoSupport.save(catalog);
+				}
+			}
+		}
 	}
 
 	@Override
@@ -650,38 +572,27 @@ public class MerchandiseService implements IMerchandiseService {
 	}
 
 	@Override
-	public void addCatalog(List<CategoryVo> categoryVos, String cateId) {
+	public void addMerchandise(List<CategoryVo> categoryVos, String cateId) {
 
 		Category category = hbDaoSupport.findTById(Category.class, cateId);
 		if (null != categoryVos && categoryVos.size() > 0 && null != category) {
 			for (CategoryVo categoryVo : categoryVos) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				map.put("merCode", categoryVo.getMerCode());
-				List<MerchandiseCatalog> list = hbDaoSupport
-						.executeQuery(
-								"FROM MerchandiseCatalog m WHERE m.merchandise.code=:merCode AND m.category IS null",
-								map, null);
-				if (null != list && list.size() > 0) {
-					for (MerchandiseCatalog catalog : list) {
-
-						MerchandiseCatalog catalog2 = new MerchandiseCatalog();
-						catalog2.setMerchandise(catalog.getMerchandise());
-						catalog2.setCreatedAt(SystemTimeProvider
-								.getCurrentTime());
-						catalog2.setCategory(category);
-						catalog2.setCreatedBy(UserContext.getUserId());
-						catalog2.setDisplaySort(categoryVo.getDisplaySort());
-						catalog2.setLastModifiedAt(SystemTimeProvider
-								.getCurrentTime());
-						catalog2.setLastModifiedBy(UserContext.getUserId());
-						catalog2.setPrice(catalog.getPrice());
-						catalog2.setStatus(categoryVo.getStatus());
-						catalog2.setUnitId(catalog.getUnitId());
-
-						hbDaoSupport.save(catalog2);
-					}
+				Merchandise merchandise = hbDaoSupport.findTById(Merchandise.class, categoryVo.getMerchandiseId());
+				if( null != merchandise){
+					MerchandiseCatalog catalog = new MerchandiseCatalog();
+					
+					catalog.setCategory(category);
+					catalog.setCreatedAt(SystemTimeProvider.getCurrentTime());
+					catalog.setCreatedBy(UserContext.getUserId());
+					catalog.setDisplaySort(categoryVo.getDisplaySort());
+					catalog.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+					catalog.setLastModifiedBy(UserContext.getUserId());
+					catalog.setMerchandise(merchandise);
+					catalog.setOn_offTIme(categoryVo.getOn_offTime());
+					catalog.setStatus(categoryVo.getStatus());
+					
+					hbDaoSupport.save(catalog);
 				}
-
 			}
 		}
 	}
@@ -699,36 +610,25 @@ public class MerchandiseService implements IMerchandiseService {
 	}
 
 	@Override
-	public boolean deleteMer_cataByCatalog(MerchandiseCatalog catalog) {
-
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("merchandise", catalog.getMerchandise());
-		params.put("unitId", catalog.getUnitId());
-		List<Long> count = hbDaoSupport
-				.executeQuery(
-						"SELECT COUNT(m) FROM MerchandiseCatalog m WHERE m.merchandise=:merchandise AND m.unitId=:unitId AND m.category IS NOT null",
-						params, null);
-		if (null != count && count.size() > 0) { // 该兑换类型与商品类别有关联，不能删除
-			if (count.get(0) == 0) {
-				hbDaoSupport
-						.executeHQL(
-								"DELETE MerchandiseCatalog m WHERE m.merchandise=? AND m.unitId=?",
-								new Object[] { catalog.getMerchandise(),
-										catalog.getUnitId() });
-				return true;
-			} else {
-				return false;
-			}
+	public boolean deleteMerchandiseSaleform(MerchandiseSaleform merchandiseSaleform) {
+		
+		List<MerchandiseCatalog> list = hbDaoSupport.findTsByHQL("FROM MerchandiseCatalog WHERE merchandise=?", merchandiseSaleform.getMerchandise());
+		if(null != list && list.size() > 0){
+			return false;
 		}
+		hbDaoSupport.delete(merchandiseSaleform);
 		return true;
 	}
 
 	@Override
 	public List<CategoryVo> findCategorysByMerchandise(Merchandise merchandise) {
-		
+
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("merchandise", merchandise);
-		List<CategoryVo> list = hbDaoSupport.executeQuery("SELECT new com.chinarewards.metro.domain.merchandise.CategoryVo(m.category as category, m.status as status, m.displaySort as displaySort) FROM MerchandiseCatalog m WHERE m.category IS NOT null AND m.merchandise=:merchandise GROUP BY m.category", params, null);
+		List<CategoryVo> list = hbDaoSupport
+				.executeQuery(
+						"SELECT new com.chinarewards.metro.domain.merchandise.CategoryVo(m.category as category, m.status as status, m.displaySort as displaySort) FROM MerchandiseCatalog m WHERE m.category IS NOT null AND m.merchandise=:merchandise GROUP BY m.category",
+						params, null);
 		if (null != list && list.size() > 0) {
 			for (CategoryVo vo : list) {
 				Category category = vo.getCategory();
@@ -754,14 +654,37 @@ public class MerchandiseService implements IMerchandiseService {
 	@Override
 	public Map<String, MerchandiseFile> findMerchandiseFIlesByMerchandise(
 			Merchandise merchandise) {
-		
-		List<MerchandiseFile> list = hbDaoSupport.findTsByHQL("FROM MerchandiseFile WHERE merchandise=?", merchandise);
+
+		List<MerchandiseFile> list = hbDaoSupport.findTsByHQL(
+				"FROM MerchandiseFile WHERE merchandise=?", merchandise);
 		Map<String, MerchandiseFile> files = new HashMap<String, MerchandiseFile>();
-		if(null != list && list.size() > 0){
-			for(MerchandiseFile file : list){
-				files.put("A"+UUIDUtil.generate(), file);
+		if (null != list && list.size() > 0) {
+			for (MerchandiseFile file : list) {
+				files.put("A" + UUIDUtil.generate(), file);
 			}
 		}
 		return files;
+	}
+
+	@Override
+	public List<MerchandiseSaleform> findSaleFormsByMerchandise(
+			Merchandise merchandise) {
+
+		List<MerchandiseSaleform> list = hbDaoSupport.findTsByHQL(
+				"FROM MerchandiseSaleform WHERE merchandise=?", merchandise);
+		return list;
+	}
+
+	@Override
+	public boolean deleteSaleForm(MerchandiseSaleform saleform) {
+
+		List<MerchandiseCatalog> list = hbDaoSupport.findTsByHQL(
+				"FROM MerchandiseCatalog WHERE merchandise=?",
+				saleform.getMerchandise());
+		if (null != list && list.size() > 0) {// 商品已经与商品类别关联了，不能删除？
+			return false;
+		}
+		hbDaoSupport.delete(saleform);
+		return true;
 	}
 }

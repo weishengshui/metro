@@ -5,11 +5,13 @@ import java.util.Map;
 
 import com.chinarewards.metro.domain.category.Category;
 import com.chinarewards.metro.domain.merchandise.CatalogVo;
-import com.chinarewards.metro.domain.merchandise.CategoryVo;
 import com.chinarewards.metro.domain.merchandise.Merchandise;
 import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
+import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
+import com.chinarewards.metro.model.merchandise.CategoryVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
+import com.chinarewards.metro.model.merchandise.SaleFormVo;
 
 public interface IMerchandiseService {
 
@@ -60,13 +62,13 @@ public interface IMerchandiseService {
 	 * 			商品基本信息
 	 * @param files
 	 * 			商品图片信息
-	 * @param catalogVos
+	 * @param saleFormVos
 	 * 			商品售卖形式
 	 * @param categoryVos
 	 * 			商品类别信息
 	 */
 	void createMerchandise(Merchandise merchandise,
-			List<MerchandiseFile> files, List<CatalogVo> catalogVos,
+			List<MerchandiseFile> files, List<SaleFormVo> saleFormVos,
 			List<CategoryVo> categoryVos);
 	
 	/**
@@ -91,7 +93,7 @@ public interface IMerchandiseService {
 	 * @param cataId
 	 * @return
 	 */
-	String checkMerchCataHasCategory(String cataId);
+//	String checkMerchCataHasCategory(String cataId);
 	
 	/**
 	 * 批量删除商品
@@ -129,11 +131,11 @@ public interface IMerchandiseService {
 	 * 
 	 * @param merchandise
 	 * @param files
-	 * @param catalogVos
+	 * @param saleFormVos
 	 * @param categoryVos
 	 */
 	void updateMerchandise(Merchandise merchandise,
-			List<MerchandiseFile> files, List<CatalogVo> catalogVos,
+			List<MerchandiseFile> files, List<SaleFormVo> saleFormVos,
 			List<CategoryVo> categoryVos);
 	
 	/**
@@ -212,7 +214,7 @@ public interface IMerchandiseService {
 	 * @param categoryVos
 	 * @param cateId
 	 */
-	void addCatalog(List<CategoryVo> categoryVos, String cateId);
+	void addMerchandise(List<CategoryVo> categoryVos, String cateId);
 	
 	/**
 	 * 获取某一商品的所有兑换形式
@@ -228,7 +230,7 @@ public interface IMerchandiseService {
 	 * @param catalog
 	 * @return
 	 */
-	boolean deleteMer_cataByCatalog(MerchandiseCatalog catalog);
+	boolean deleteMerchandiseSaleform(MerchandiseSaleform merchandiseSaleform);
 	/**
 	 * 检查指定类别中，商品排序号是否存在
 	 * 
@@ -253,5 +255,20 @@ public interface IMerchandiseService {
 	 */
 	Map<String, MerchandiseFile> findMerchandiseFIlesByMerchandise(
 			Merchandise merchandise);
+	
+	/**
+	 * 查询商品的售卖形式
+	 * @param merchandise
+	 * @return
+	 */
+	List<MerchandiseSaleform> findSaleFormsByMerchandise(Merchandise merchandise);
+	
+	/**
+	 * 删除售卖形式
+	 * 
+	 * @param saleform
+	 * @return
+	 */
+	boolean deleteSaleForm(MerchandiseSaleform saleform);
 	
 }

@@ -26,6 +26,7 @@ public class ActivityInfo {
 	private String contacts ;
 	private String conTel ;
 	private String picture ;
+	//1:默认，0：取消，-1：逻辑删除
 	private int tag ;
 	
 	public Integer getId() {

@@ -44,7 +44,7 @@
 			
 			<tr>
 				<td><span style="color: red;">*</span>短信内容:</td>
-				<td><textarea name="content" style="height: 80px; width: 380px;"  data-options="required:true"></textarea></td>
+				<td><textarea name="content" id="overFont" style="height: 80px; width: 380px;"  data-options="required:true" onKeyUp="javascript:checkWord(160,event)"></textarea></td>
 			</tr>
 			<tr>
 				<td>
@@ -87,6 +87,38 @@
 	
 	
 <script type="text/javascript">
+			String.prototype.trim = function() 
+			{ 
+			   return this.replace(/(^\s*)|(\s*$)/g, ""); 
+			}
+			function checkWord(len,evt){
+				var overFont=document.getElementById("overFont");
+				if(evt==null)
+				{
+				  evt = window.event;
+				}
+				var src = evt.srcElement? evt.srcElement : evt.target; 
+				var str=src.value;
+				myLen=0;
+				i=0;
+				otherLen=len;
+				for(;(i<str.length)&&(myLen<=len);i++){
+				  if(str.charCodeAt(i)>0&&str.charCodeAt(i)<128||str.charCodeAt(i)==160)
+				{
+			     	myLen++;
+				}
+				 else
+				{
+					myLen+=2;
+					otherLen=len-20;
+				}
+				}
+				  overFont.innerHTML="还剩"+(otherLen-myLen)/2+"个字，或"+(otherLen-myLen)+"个字符";
+				if(myLen>len){
+					alert("您输入超过限定长度");
+					src.value=str.substring(0,i-1);
+				}
+		}
 	
 	    function doSubmit(){
 			$('#messageForm').form('submit',{

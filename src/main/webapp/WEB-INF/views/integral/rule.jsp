@@ -81,7 +81,7 @@ function submit(){
 					<td style="color:red">*</td>
 					<td>积分倍数</td>
 					<td>	
-						<input value="${rule.times }" type="text" name="times" style="width:200px;" class="easyui-numberbox" data-options="precision:2,required:true"/>
+						<input value="${rule.times }" type="text" name="times" style="width:200px;" maxlength="4" class="easyui-numberbox" data-options="precision:2,required:true"/>
 					</td>
 				</tr>
 				<tr>

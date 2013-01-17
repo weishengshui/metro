@@ -21,29 +21,12 @@
 </style>
 <script type="text/javascript">
 	
-	function addStoreDialog(){
-		$("#store").dialog({
-			height:350,
-			width:600,
-			modal:true,
-			resizable:true,
-			title:"选择门店"
-		});
-	}
-	
-	function selectShop(){
-		var rows = $('#shopTable').datagrid('getSelections');//getSelected选一个
-		for(var i=0; i<rows.length; i++){
-			append1(rows[i].id,rows[i].name);
-		}
-		$("#store").dialog("close");
-	}
-	
-	function submits(){
+	function save(){
 		var shopId = parent.getId();
 		if(shopId == 0){
 			alert('请先保存门店');return false;
 		}
+		alert(shopId);
 		if(validate() && validate1()){
 			accept();
 			accept1();
@@ -59,15 +42,15 @@
 	        if(posinserted=='[]'){posinserted = '';};
 	        if(posdeleted=='[]'){posdeleted = '';};
 	        if(posupdated=='[]'){posupdated = '';};
-	        if(typeinserted =='' && posinserted==''){
+	        if(typeinserted =='' && posinserted=='' && typedeleted=='' && posdeleted=='' && posupdated=='' && typeupdated==''){
 		        alert('请添加消费类型或pos机');return false;
 		    }
 	        json = "&typeinserted="+typeinserted+"&typedeleted="+typedeleted+"&typeupdated="+typeupdated+
      	   		   "&posinserted="+posinserted+"&posdeleted="+posdeleted+"&posupdated="+posupdated+"&shopId="+shopId;
 	     	
 	        $.post("saveTypeAndPost?"+json, function(rsp) {
-	        	$('#dg').datagrid('load',{shopId:shopId});
-	        	$('#dg1').datagrid('load',{shopId:shopId});
+	        	$('#dg').datagrid('load',{});
+	        	$('#dg1').datagrid('load',{});
 	        	alert('保存成功!');
 	        }, "JSON").error(function() {
 	           $.messager.alert("提示", "提交错误了！");
@@ -85,15 +68,14 @@
 		                singleSelect: true,
 		                toolbar: '#tb',
 		                onClickCell: onClickCell,
-		                fitColumns:true,
 		                url:'findType?shopId=${shopId}',
 		                height:220
 		            ">
         	<thead>
-            <tr>
+            <tr style="width:500px;">
             	<th data-options="field:'id',hidden:true">id</th>
-                <th data-options="field:'name',width:200,align:'left',editor:'text',options:{required:true}">消费类型名称</th>          
-                <th data-options="field:'num',width:180,editor:'numberbox'">POS机显示排序</th>
+                <th data-options="field:'name',width:210,align:'left',editor:'text',options:{required:true}">消费类型名称</th>          
+                <th data-options="field:'num',width:210,editor:'numberbox'">POS机显示排序</th>
                 <th data-options="field:'op',align:'center',width:50,styler:cellStyler">操作</th>
             </tr>
       	  </thead>  
@@ -106,7 +88,6 @@
 		            data-options="  
 		                singleSelect: true,
 		                toolbar: '#tb1',  
-		                fitColumns:true,
 		                url: 'findPost?shopId=${shopId}',
 		                onClickCell: onClickCell1,
 		                height:220
@@ -114,8 +95,8 @@
         <thead>
             <tr>
             	<th data-options="field:'id',hidden:true">id</th>
-                <th data-options="field:'code',width:200,align:'left',editor:'text'">POS编号</th>          
-                <th data-options="field:'bindDate',width:180,editor:'datebox'">绑定时间</th>
+                <th data-options="field:'code',width:210,align:'left',editor:'text'">POS编号</th>          
+                <th data-options="field:'bindDate',width:210,editor:'datebox'">绑定时间</th>
                 <th data-options="field:'op',align:'center',width:50,styler:cellStyler">操作</th>  
             </tr>
       	  </thead>  
@@ -126,7 +107,7 @@
 			<a id="btn" href="javascript:void(0)" onclick="resets()" class="easyui-linkbutton" data-options="iconCls:'icon-redo'">重置</a>
 			<a id="btn" href="javascript:void(0)" onclick="submit()" class="easyui-linkbutton" data-options="iconCls:'icon-save'">保存</a>
 			-->
-			<input type="button" onclick="submits()" value="保 存"/>    	
+			<input type="button" onclick="save()" value="保 存"/>    	
     	</div>
    	</fieldset>
 	  
@@ -154,13 +135,8 @@
             if (endEditing()){
             	$('#dg').datagrid('appendRow',{});
                 editIndex = $('#dg').datagrid('getRows').length-1;  
-                $('#dg').datagrid('selectRow', editIndex)  
-                        .datagrid('beginEdit', editIndex);  
+                $('#dg').datagrid('selectRow', editIndex).datagrid('beginEdit', editIndex);  
             }
-            $('#dg').datagrid('appendRow',{id:id,name: name});
-    		editIndex = $('#dg').datagrid('getRows').length-1;  
-          	$('#dg').datagrid('selectRow', editIndex).datagrid('beginEdit', editIndex);
-          	accept();
         }  
         
         function accept(){  
@@ -223,10 +199,6 @@
                 $('#dg1').datagrid('selectRow', editIndex1)  
                         .datagrid('beginEdit', editIndex1);  
             }
-            $('#dg1').datagrid('appendRow',{id:id,name: name});
-    		editIndex = $('#dg1').datagrid('getRows').length-1;  
-          	$('#dg1').datagrid('selectRow', editIndex).datagrid('beginEdit', editIndex);
-          	accept();
         }  
         
         function accept1(){  
