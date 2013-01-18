@@ -26,7 +26,6 @@ function getStatus(v){
 
 $(function(){
 
-	
 })
 
 
@@ -42,7 +41,7 @@ $(function(){
 				<td><input type="text" name=taskName size="18"/></td>
 				<td>状态:</td>
 				<td>
-					<select name="taskStates" style="width:100px;height:22px;">
+					<select name="taskStates" style="width:100px;height:22px;" onchange="$('#table').datagrid({singleSelect:(this.value=='')})">
 						<option value=""></option>
 						<c:forEach items="${status }" var="s">
 							<option value="${s.key }">${s.value }</option>
@@ -78,19 +77,20 @@ $(function(){
 	
 	<div style="text-align:left;">
   			<br>
-  			<button type="button" onclick="viewTask();" id="view">查看任务</button>&nbsp;&nbsp;&nbsp;&nbsp;
+  			<button type="button" onclick="viewTask();" id="view"  >查看任务</button>&nbsp;&nbsp;&nbsp;&nbsp;
   			<button type="button" onclick="pauseTask();" id="pauser">暂停</button>&nbsp;&nbsp;&nbsp;&nbsp;
   			<button type="button" onclick="restartTask();" id="restart">重启</button>&nbsp;&nbsp;&nbsp;&nbsp;
   			<button type="button" onclick="cancelTask();" id="cancel">取消</button>&nbsp;&nbsp;&nbsp;&nbsp;
   		    <button type="button" onclick="resetTask();" id="reset">重置任务</button>&nbsp;&nbsp;&nbsp;&nbsp;
   			<button type="button" onclick="deleteTask();" id="delete">删除</button>&nbsp;&nbsp;&nbsp;&nbsp;
-  			
 	</div>
 
 <script type="text/javascript">
 
 
 function searchs(){
+	
+	
     //load 加载数据分页从第一页开始, reload 从当前页开始
 	$('#table').datagrid('load',getForms("searchForm"));
 }
@@ -102,7 +102,7 @@ function checkSelect(id,states){
 	if(states==3){//暂停----执行、重启
 		$("#reset").attr("disabled","disabled");
 		$("#pauser").attr("disabled","disabled");
-		
+		$("#cancel").attr("disabled","disabled");
 		$("#delete").attr("disabled","disabled");
 		$("#restart").attr("disabled",false);
 	}
@@ -161,6 +161,10 @@ function viewTask(){
 			alert("请选择任务！");
 			return;
 		}
+		if($(checkedObjs).size() > 1){
+			alert("查看任务时，只能选择一个！");
+			return;
+		}
 		var checkvalue=$(checkedObjs).val();
     parent.addTab('查看任务信息','message/viewTask?taskid='+checkvalue);
          
@@ -172,15 +176,18 @@ function pauseTask(){
 		alert("请选择任务！");
 		return;
 	}
-	var checkvalue=$(checkedObjs).val();
-	$.ajax({
-		url:'pauseTask',
-		type:'post',
-		data:'taskId='+checkvalue,
-		success: function(data){
-			$('#table').datagrid('reload');
-		}
-	}); 
+	 for(i=0; i<checkedObjs.length; i++){
+		 var checkvalue=$(checkedObjs[i]).val();
+	
+		$.ajax({
+			url:'pauseTask',
+			type:'post',
+			data:'taskId='+checkvalue,
+			success: function(data){
+				$('#table').datagrid('reload');
+			}
+		}); 
+	 }
 }
 function restartTask(){
 	var checkedObjs = $('input[type=checkbox][name=taskId]:checked');
@@ -190,15 +197,17 @@ function restartTask(){
 		return;
 	}
 	
-	var checkvalue=$(checkedObjs).val();
-	$.ajax({
-		url:'restartTask',
-		type:'post',
-		data:'taskid='+checkvalue,
-		success: function(data){
-			$('#table').datagrid('reload');
-		}
-	}); 
+	 for(i=0; i<checkedObjs.length; i++){
+		 var checkvalue=$(checkedObjs[i]).val();
+			$.ajax({
+				url:'restartTask',
+				type:'post',
+				data:'taskid='+checkvalue,
+				success: function(data){
+					$('#table').datagrid('reload');
+				}
+			});
+	 }
 }
 function cancelTask(){
 	var checkedObjs = $('input[type=checkbox][name=taskId]:checked');
@@ -207,15 +216,17 @@ function cancelTask(){
 		alert("请选择任务！");
 		return;
 	}
-	var checkvalue=$(checkedObjs).val();
-	$.ajax({
-		url:'cancelTask',
-		type:'post',
-		data:'taskid='+checkvalue,
-		success: function(data){
-			$('#table').datagrid('reload');
-		}
-	}); 
+	 for(i=0; i<checkedObjs.length; i++){
+		 var checkvalue=$(checkedObjs[i]).val();
+			$.ajax({
+				url:'cancelTask',
+				type:'post',
+				data:'taskid='+checkvalue,
+				success: function(data){
+					$('#table').datagrid('reload');
+				}
+			}); 
+	 }
 	
 }
 
@@ -228,15 +239,17 @@ function resetTask(){
 		alert("请选择任务！");
 		return;
 	}
-	var checkvalue=$(checkedObjs).val();
-	$.ajax({
-		url:'resetTask',
-		type:'post',
-		data:'taskid='+checkvalue,
-		success: function(data){
-			$('#table').datagrid('reload');
-		}
-	}); 
+	 for(i=0; i<checkedObjs.length; i++){
+		 var checkvalue=$(checkedObjs[i]).val();
+			$.ajax({
+				url:'resetTask',
+				type:'post',
+				data:'taskid='+checkvalue,
+				success: function(data){
+					$('#table').datagrid('reload');
+				}
+			}); 
+	 }
 }
 //失败、已结束、已取消的才可以删除
 function deleteTask(){
@@ -246,15 +259,20 @@ function deleteTask(){
 		alert("请选择任务！");
 		return;
 	}
-	var checkvalue=$(checkedObjs).val();
-	$.ajax({
-		url:'deleteTask',
-		type:'post',
-		data:'taskid='+checkvalue,
-		success: function(data){
-			$('#table').datagrid('reload');
-		}
-	}); 
+	if(!confirm("确认是否删除?")){
+		return false; 
+	}
+	 for(i=0; i<checkedObjs.length; i++){
+		 var checkvalue=$(checkedObjs[i]).val();
+			$.ajax({
+				url:'deleteTask',
+				type:'post',
+				data:'taskid='+checkvalue,
+				success: function(data){
+					$('#table').datagrid('reload');
+				}
+			}); 
+      }
 }
 </script>
 </body>

@@ -15,10 +15,9 @@ public interface IActivityService {
 	/**
 	 * 创建活动
 	 * @param activity
-	 * @param pic
 	 * @return
 	 */
-	public ActivityInfo saveActivity(ActivityInfo activity,FileItem pic);
+	public ActivityInfo saveActivity(ActivityInfo activity);
 	
 	/**
 	 * 添加优惠信息
@@ -53,7 +52,7 @@ public interface IActivityService {
 	 * 修改活动内容
 	 * @param activity
 	 */
-	public void updateActivity(ActivityInfo activity,FileItem pic);
+	public void updateActivity(ActivityInfo activity);
 	
 	/**
 	 * 查询活动信息

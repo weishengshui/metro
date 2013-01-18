@@ -18,19 +18,11 @@
 
 <script type="text/javascript">
 	
-	$(document).ready(function(){
-		// when double click a cell, begin editing and make the editor get focus
-		$('#tt').datagrid({
-			onDblClickRow: function(rowIndex,rowData){
-					var titile = '维护' + rowData.merchandise.name + '的信息';
-					parent.addTab(titile,'<%=request.getContextPath()%>/merchandise/show?id='+ rowData.id);			
-			}
-		});	  
-	});
-	
 	function formatterdate(val, row) {
         var date = new Date(val);
-        return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+        var m = (date.getMonth()+1) < 10 ? "0"+(date.getMonth()+1):(date.getMonth()+1);
+        var d = date.getDate() < 10 ? "0"+date.getDate() : date.getDate();
+        return date.getFullYear() + '-' + m + '-' + d;
 	}
 
 	function doSearch(){  
@@ -42,7 +34,7 @@
 	    	unitId:$('#sellform').val()
 	    });  
 	}
-	function deleteMerchandCata(){
+	function deleteMerchandises(){
 		var rows = $('#tt').datagrid('getChecked');
 		if(rows){
 			if(rows.length == 0){
@@ -71,7 +63,7 @@
 			alert("请先选择要删除的行");			
 		}
 	}
-	function updateMerchandCata(){
+	function updateMerchandise(){
 		var rows = $('#tt').datagrid('getChecked');
 		if(rows){
 			if(rows.length == 0){
@@ -83,13 +75,66 @@
 				return;
 			}
 			var row = rows[0];
-			var titile = '维护' + row.merchandise.name + '的信息';
+			var titile = '维护' + row.name + '的信息';
 			parent.addTab(titile,'merchandise/show?id='+ row.id);
 			
 		}else{
 			alert("请先选择要修改的行");			
 		}
 	}
+	function formatSaleform(v, r, i){
+		var saleFormVos = r.saleFormVos;
+		var str = "";
+		if(saleFormVos && saleFormVos.length){
+			for(var i=0, length = saleFormVos.length; i< length; i++){
+				var saleFormVo = saleFormVos[i];
+				if(saleFormVo.unitId == '0'){
+					str += "正常售卖/";
+				}else{
+					str += "积分兑换/";
+				}
+			}
+		}
+		if(str.length > 0){
+			str = str.substring(0, str.length -1);
+		}
+		return str;
+	}
+	function formatPrice(v, r, i){
+		var saleFormVos = r.saleFormVos;
+		var str = "";
+		if(saleFormVos && saleFormVos.length){
+			for(var i=0, length = saleFormVos.length; i< length; i++){
+				var saleFormVo = saleFormVos[i];
+				str += saleFormVo.price + "/";
+			}
+		}
+		if(str.length > 0){
+			str = str.substring(0, str.length -1);
+		}
+		return str;
+	}
+	function formatPreferentialPrice(v, r, i){
+		var saleFormVos = r.saleFormVos;
+		var str = "";
+		if(saleFormVos && saleFormVos.length){
+			for(var i=0, length = saleFormVos.length; i< length; i++){
+				var saleFormVo = saleFormVos[i];
+				var preferentialPrice = saleFormVo.preferentialPrice;
+				if(preferentialPrice){
+					str += preferentialPrice + "/";	
+				}else{
+					str += "无/";
+				}
+				
+			}
+		}
+		if(str.length > 0){
+			str = str.substring(0, str.length -1);
+		}
+		return str;
+	}
+	
 </script>
 
 </head>
@@ -115,7 +160,7 @@
 									<td width="80px">售卖形式：</td>
 									<td width="200px" align="left">
 										<select id="sellform" name="sellform" style="width:150px">
-											<option value=""></option>
+											<option value="">请选择</option>
 											<option value="0">正常售卖</option>
 											<option value="1">积分兑换</option>
 										</select>
@@ -149,37 +194,21 @@
 	       					<thead>  
 	           				<tr>  
 	           				<th field="id" checkbox="true"></th> 
-	                		<th data-options="field:'1',formatter:function(v,o,i){return o.merchandise.code}">商品编号</th>
-	                		<th data-options="field:'2',formatter:function(v,o,i){return o.merchandise.name}" >商品名称</th>
-	                		<th data-options="field:'3',formatter:function(v,o,i){return o.merchandise.model}" >型号</th>
-	                		<th data-options="field:'unitId',formatter:function(v,o,i){if(v=='0'){return '正常售卖';}else{return '积分兑换';}}">售卖形式</th>
-	                		<th field="price">售价</th>
-	                		<th data-options="field:'5',formatter:function(v,o,i){return o.merchandise.purchasePrice}">采购价</th>
-<!-- 	                		<th data-options="field:'5',formatter:function(v,o,i){return o.merchandise.purchasePrice}">操作</th> -->
-	                		  
-<!-- 	                		<th data-options="field:'catagory',formatter:function(v,r,i){if(v!=null){return v.name;}}" >商品类别</th>   -->
-<!-- 	                		<th field="code" align="right">商品代码</th>   -->
-<!-- 	                		<th field="description" align="right">商品描述</th> -->
-<!-- 	                		<th field="model" align="right">商品型号</th> -->
-<!-- 	                		<th field="purchasePrice" align="right">采购价</th> -->
-<!-- 			                <th field="createdBy" >创建人</th>   -->
-<!-- 			                <th field="createdAt" formatter="formatterdate" align="center">创建时间</th>   -->
+	                		<th data-options="field:'code'">商品编号</th>
+	                		<th data-options="field:'brandName'" >品牌</th>
+	                		<th data-options="field:'name'" >商品名称</th>
+	                		<th data-options="field:'model'" >型号</th>
+	                		<th data-options="field:'a',formatter:function(v,r,i){return formatSaleform(v, r, i);}">售卖形式</th>
+	                		<th data-options="field:'b',formatter:function(v,r,i){return formatPrice(v, r, i);}">售价</th>
+	                		<th data-options="field:'c',formatter:function(v,r,i){return formatPreferentialPrice(v, r, i);}">优惠价</th>
+	                		<th data-options="field:'purchasePrice'">采购价</th>
 				           	</tr>  
 					       	</thead>  
 				   		</table> 
 				   		<div style="text-align:right;">
 				   			<br>
-				   			<button type="button" onclick="updateMerchandCata()">修改</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="deleteMerchandCata()">删除</button>&nbsp;&nbsp;&nbsp;&nbsp;
+				   			<button type="button" onclick="updateMerchandise()">修改</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="deleteMerchandises()">删除</button>&nbsp;&nbsp;&nbsp;&nbsp;
 				   		</div>
-<!-- 					   	 <div id="tb" style="padding:5px;height: 60px;">   -->
-<!-- 				    		<span>商品名称:</span>   -->
-<!-- 				    		<input id="name" style="line-height:26px;border:1px solid #ccc">   -->
-<!-- 				    		<span>商品代码:</span>   -->
-<!-- 				    		<input id="code" style="line-height:26px;border:1px solid #ccc">  <br /> -->
-<!-- 				    		<span>商品类别:</span>   -->
-<!-- 				    		<input id="catagoryName" style="line-height:26px;border:1px solid #ccc"> -->
-<!-- 				    		<a href="#" class="easyui-linkbutton" iconCls="icon-search" plain="true" onclick="doSearch()">Search</a> -->
-<!-- 						</div> -->
 					</fieldset>
 				</td>
 			</tr>

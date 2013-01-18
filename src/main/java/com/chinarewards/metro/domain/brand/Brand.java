@@ -2,18 +2,23 @@ package com.chinarewards.metro.domain.brand;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import org.codehaus.jackson.annotate.JsonManagedReference;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.chinarewards.metro.core.common.DateSerializer;
 import com.chinarewards.metro.domain.file.FileItem;
+import com.chinarewards.metro.domain.merchandise.Merchandise;
 
 @Entity
 public class Brand implements Serializable {
@@ -56,6 +61,8 @@ public class Brand implements Serializable {
 	@OneToOne
 	private FileItem logo;
 
+	@OneToMany(mappedBy="brand", fetch=FetchType.EAGER)
+	private Set<Merchandise> merchandises;
 	
 	
 	public Integer getId() {
@@ -162,5 +169,16 @@ public class Brand implements Serializable {
 	public void setLastModifiedBy(Integer lastModifiedBy) {
 		this.lastModifiedBy = lastModifiedBy;
 	}
+	
+	@JsonManagedReference
+	public Set<Merchandise> getMerchandises() {
+		return merchandises;
+	}
+
+	public void setMerchandises(Set<Merchandise> merchandises) {
+		this.merchandises = merchandises;
+	}
+	
+	
 	
 }

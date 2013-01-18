@@ -47,6 +47,10 @@
 		$("#siteId").val(row.id);
 		$("#site").dialog("close");
 	}
+	function searchs(){
+        //load 加载数据分页从第一页开始, reload 从当前页开始
+    	$('#table').datagrid('load',getForms("searchForm"));
+    }
 </script>
 </head>
 <body>
@@ -72,16 +76,18 @@
 	<div style="display: none;">
 		<div id="site">
 			<div style="margin-top:5px;margin-bottom: 5px;">
-			&nbsp;站台名：<input type="text" />
-			<a id="btn" href="javascript:void(0)" onclick="" class="easyui-linkbutton">搜索</a>
+			<form id="searchForm">
+			&nbsp;站台名：<input type="text" name="name"/>
+			<a id="btn" href="javascript:void(0)" onclick="searchs()" class="easyui-linkbutton">搜索</a>
 			<a id="btn" href="javascript:void(0)" onclick="selectSite()" class="easyui-linkbutton">确定</a>
+			</form>
 			</div>
 			<table id="table" class="easyui-datagrid" data-options="url:'findSites',fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
 				rownumbers:true,pageList:pageList,singleSelect:true,height:250" >
 			    <thead>
 			        <tr>
 			        	<th field="ck" checkbox="true"></th>  
-			        	<th data-options="field:'id',hidden:true"></th>
+			        	<th data-options="field:'id',hidden:'true',width:5">id</th>
 			            <th data-options="field:'name',width:30">站台名</th>
 			        </tr>  
 			    </thead>  

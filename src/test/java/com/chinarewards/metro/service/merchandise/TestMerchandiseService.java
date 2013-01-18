@@ -2,7 +2,6 @@ package com.chinarewards.metro.service.merchandise;
 
 import java.util.List;
 
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +11,8 @@ import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.chinarewards.metro.core.common.Page;
-import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
-import com.chinarewards.metro.service.merchandise.IMerchandiseService;
+import com.chinarewards.metro.model.merchandise.MerchandiseVo;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:applicationContext.xml" })
@@ -32,7 +30,7 @@ public class TestMerchandiseService {
 		page.setPage(1);
 		page.setRows(10);
 		merchandiseCriteria.setPaginationDetail(page);
-		List<MerchandiseCatalog> list = merchandiseService.searchMercCatagorys(merchandiseCriteria);
+		List<MerchandiseVo> list = merchandiseService.searchMerchandises(merchandiseCriteria);
 		System.out.println("list size is "+list.size());
 	}
 }

@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.chinarewards.metro.domain.category.Category;
-import com.chinarewards.metro.domain.merchandise.CatalogVo;
 import com.chinarewards.metro.domain.merchandise.Merchandise;
 import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
 import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
 import com.chinarewards.metro.model.merchandise.CategoryVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
+import com.chinarewards.metro.model.merchandise.MerchandiseVo;
 import com.chinarewards.metro.model.merchandise.SaleFormVo;
 
 public interface IMerchandiseService {
@@ -21,7 +21,7 @@ public interface IMerchandiseService {
 	 * @param merchandiseCriteria
 	 * @return
 	 */
-	List<MerchandiseCatalog> searchMercCatagorys(MerchandiseCriteria merchandiseCriteria);
+	List<MerchandiseVo> searchMerchandises(MerchandiseCriteria merchandiseCriteria);
 
 	/**
 	 * 根据条件查询商品总数
@@ -29,7 +29,7 @@ public interface IMerchandiseService {
 	 * @param merchandiseCriteria
 	 * @return
 	 */
-	Long countMercCatagorys(MerchandiseCriteria merchandiseCriteria);
+	Long countMerchandises(MerchandiseCriteria merchandiseCriteria);
 
 	/**
 	 * 获得商品所有没有子类的类别列表
@@ -270,5 +270,13 @@ public interface IMerchandiseService {
 	 * @return
 	 */
 	boolean deleteSaleForm(MerchandiseSaleform saleform);
+	
+	/**
+	 * 根据id查询商品
+	 * 
+	 * @param id
+	 * @return
+	 */
+	Merchandise findMerchandiseId(String id);
 	
 }

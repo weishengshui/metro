@@ -44,7 +44,7 @@
 			
 			<tr>
 				<td><span style="color: red;">*</span>短信内容:</td>
-				<td><textarea name="content" id="overFont" style="height: 80px; width: 380px;"  data-options="required:true" onKeyUp="javascript:checkWord(160,event)"></textarea></td>
+				<td><textarea name="content" id="overFont" style="height: 80px; width: 380px;"  data-options="required:true" onKeyUp="javascript:checkWord(160,event)" onfocus="cancelCheckC()"></textarea></td>
 			</tr>
 			<tr>
 				<td>
@@ -64,7 +64,7 @@
 				     <span style="color: red;">*</span> 接受号码：
 				</td>
 			    <td>
-			      <input type="file" name="telephoneFile" id="telephoneFile" style="width:150px"  onchange="check(this)" class="easyui-validatebox"  data-options="required:true">
+			      <input type="file" name="telephoneFile" id="telephoneFile" style="width:150px"  onchange="check(this)" class="easyui-validatebox"  onfocus="cancelCheckF()">
 			    </td>
 			</tr>
 			
@@ -82,9 +82,6 @@
 	        	<img id="perviewFile" name="perviewFile" src="" />
 	        </div>
 	</div> 
-	
-	
-	
 	
 <script type="text/javascript">
 			String.prototype.trim = function() 
@@ -113,14 +110,32 @@
 					otherLen=len-20;
 				}
 				}
-				  overFont.innerHTML="还剩"+(otherLen-myLen)/2+"个字，或"+(otherLen-myLen)+"个字符";
+		
 				if(myLen>len){
 					alert("您输入超过限定长度");
 					src.value=str.substring(0,i-1);
 				}
 		}
-	
+			
+		function cancelCheckC(){
+				$("#checkC").remove();
+				
+	   }
+		function cancelCheckF(){
+			$("#checkT").remove();
+			
+   }
 	    function doSubmit(){
+	    	var con=$("#overFont").val();
+	    	if (con==null||con.length<1){
+	    		$("#overFont").after("<tr  id='checkC'><td style='color: red;'>短信内容不能为空！</td></tr>");
+	    		return;
+	    	}
+	    	var tf=$("#telephoneFile").val();
+	    	if(tf==null||tf.length<1){
+	    		$("#telephoneFile").after("<tr id='checkT'><td style='color: red;'>请上传号码文件！</td></tr>");
+	    		return;
+	    	}
 			$('#messageForm').form('submit',{
 				success:function(result){
 					alert(eval('('+result+')').msg);

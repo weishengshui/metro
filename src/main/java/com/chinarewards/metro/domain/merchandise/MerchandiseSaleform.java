@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import org.codehaus.jackson.annotate.JsonBackReference;
 import org.hibernate.annotations.GenericGenerator;
 
 /**
@@ -55,7 +56,8 @@ public class MerchandiseSaleform {
 	public void setId(String id) {
 		this.id = id;
 	}
-
+	
+	@JsonBackReference("Merchandise-MerchandiseSaleform")
 	public Merchandise getMerchandise() {
 		return merchandise;
 	}

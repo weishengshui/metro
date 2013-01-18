@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -38,8 +39,6 @@ import com.chinarewards.metro.core.common.SystemTimeProvider;
 import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.core.common.UserContext;
 import com.chinarewards.metro.core.service.IFileItemService;
-import com.chinarewards.metro.domain.category.Category;
-import com.chinarewards.metro.domain.merchandise.CatalogVo;
 import com.chinarewards.metro.domain.merchandise.Merchandise;
 import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
@@ -48,9 +47,9 @@ import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
 import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
 import com.chinarewards.metro.model.common.AjaxResponseCommonVo;
 import com.chinarewards.metro.model.common.ImageInfo;
-import com.chinarewards.metro.model.common.SelectVO;
 import com.chinarewards.metro.model.merchandise.CategoryVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
+import com.chinarewards.metro.model.merchandise.MerchandiseVo;
 import com.chinarewards.metro.model.merchandise.SaleFormVo;
 import com.chinarewards.metro.service.merchandise.IMerchandiseService;
 import com.chinarewards.metro.validator.merchandise.CreateMerchandiseValidator;
@@ -79,9 +78,9 @@ public class MerchandiseControler {
 
 		// prepare data
 		Merchandise merchandise = merchandiseService
-				.findMerchandiseByMercCataId(id);
-		List<MerchandiseCatalog> catalogs = merchandiseService
-				.findMercCatalogsByMercIdAndNuit(merchandise.getId());
+				.findMerchandiseId(id);
+		
+		Set<MerchandiseSaleform> saleforms = merchandise.getMerchandiseSaleforms();
 		List<CategoryVo> categoryVos = merchandiseService
 				.findCategorysByMerchandise(merchandise);
 
@@ -89,12 +88,13 @@ public class MerchandiseControler {
 		Map<String, MerchandiseFile> images = merchandiseService
 				.findMerchandiseFIlesByMerchandise(merchandise);
 		System.out.println("merchandise images size is " + images.size());
+		
 		session.setAttribute(imageSessionName, images);
 		model.addAttribute("images", CommonUtil.toJson(images));
 		model.addAttribute("imageSessionName", imageSessionName);
 
 		model.addAttribute("merchandise", merchandise);
-		model.addAttribute("catalogs", catalogs);
+		model.addAttribute("saleforms", saleforms);
 		model.addAttribute("categoryVos", CommonUtil.toJson(categoryVos));
 
 		return "merchandise/show";
@@ -378,12 +378,11 @@ public class MerchandiseControler {
 		Page paginationDetail = new Page();
 		paginationDetail.setPage(page);
 		paginationDetail.setRows(rows);
-
 		criteria.setPaginationDetail(paginationDetail);
 
-		List<MerchandiseCatalog> catalogs = merchandiseService
-				.searchMercCatagorys(criteria);
-		Long count = merchandiseService.countMercCatagorys(criteria);
+		List<MerchandiseVo> catalogs = merchandiseService
+				.searchMerchandises(criteria);
+		Long count = merchandiseService.countMerchandises(criteria);
 
 		model.addAttribute("total", count);
 		model.addAttribute("page", page);

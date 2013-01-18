@@ -1,9 +1,7 @@
 package com.chinarewards.metro.service.activity.impl;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,13 +18,10 @@ import org.springframework.stereotype.Service;
 
 import com.chinarewards.metro.core.common.HBDaoSupport;
 import com.chinarewards.metro.core.common.Page;
-import com.chinarewards.metro.core.common.SystemTimeProvider;
-import com.chinarewards.metro.core.common.UserContext;
 import com.chinarewards.metro.domain.activity.ActivityInfo;
 import com.chinarewards.metro.domain.activity.BrandActivity;
 import com.chinarewards.metro.domain.activity.BrandMode;
 import com.chinarewards.metro.domain.brand.Brand;
-import com.chinarewards.metro.domain.file.FileItem;
 import com.chinarewards.metro.domain.pos.PosBind;
 import com.chinarewards.metro.domain.shop.DiscountNumber;
 import com.chinarewards.metro.service.activity.IActivityService;
@@ -38,21 +33,13 @@ public class ActivityServiceImpl implements IActivityService {
 	private HBDaoSupport hbDaoSupport;
 
 	@Override
-	public ActivityInfo saveActivity(ActivityInfo activity, FileItem pic) {
-		if (null != pic) {
-			pic.setCreatedAt(SystemTimeProvider.getCurrentTime());
-			pic.setCreatedBy(UserContext.getUserId());
-			pic.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
-			pic.setLastModifiedBy(UserContext.getUserId());
-			hbDaoSupport.save(pic);
-		}
-		System.out.println(hbDaoSupport);
+	public ActivityInfo saveActivity(ActivityInfo activity) {
 		activity = hbDaoSupport.save(activity);
 		return activity;
 	}
 
 	@Override
-	public void updateActivity(ActivityInfo activity, FileItem pic) {
+	public void updateActivity(ActivityInfo activity) {
 
 		String hql = "update ActivityInfo set activityName = ? ,startDate = ?,endDate = ?,description = ?,hoster = ?,activityNet = ?,contacts = ?,conTel = ?,picture = ? where id = ?";
 		hbDaoSupport.executeHQL(hql, activity.getActivityName(),

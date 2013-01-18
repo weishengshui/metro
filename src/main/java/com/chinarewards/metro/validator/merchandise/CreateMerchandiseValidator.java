@@ -31,7 +31,10 @@ public class CreateMerchandiseValidator implements Validator {
 	@Override
 	public void validate(Object target, Errors errors) {
 
-		// Merchandise merchandise = (Merchandise) target;
+		Merchandise merchandise = (Merchandise) target;
+		if(null == merchandise.getBrand().getId()){
+			merchandise.setBrand(null);
+		}
 		ValidationUtils.rejectIfEmptyOrWhitespace(errors, "name", "name",
 				"请输入商品名称");
 		ValidationUtils.rejectIfEmptyOrWhitespace(errors, "code", "code",

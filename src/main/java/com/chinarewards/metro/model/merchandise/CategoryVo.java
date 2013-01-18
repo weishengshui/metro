@@ -3,6 +3,7 @@ package com.chinarewards.metro.model.merchandise;
 import java.util.Date;
 
 import com.chinarewards.metro.domain.category.Category;
+import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
 
 /**
@@ -47,12 +48,13 @@ public class CategoryVo {
 		this.displaySort = displaySort;
 	}
 
-	public CategoryVo(Category category, MerchandiseStatus status,
-			Long displaySort) {
+	public CategoryVo(MerchandiseCatalog catalog){
+		Category category = catalog.getCategory();
+		
 		this.categoryId = category.getId();
-		this.category = category;
-		this.status = status;
-		this.displaySort = displaySort;
+		this.status = catalog.getStatus();
+		this.displaySort = catalog.getDisplaySort();
+		this.on_offTime = catalog.getOn_offTIme();
 	}
 
 	public String getCategoryId() {

@@ -10,6 +10,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
+import org.codehaus.jackson.annotate.JsonBackReference;
 import org.hibernate.annotations.GenericGenerator;
 
 import com.chinarewards.metro.domain.category.Category;
@@ -63,7 +64,8 @@ public class MerchandiseCatalog {
 	public void setId(String id) {
 		this.id = id;
 	}
-
+	
+	@JsonBackReference("Merchandise-MerchandiseCatalog")
 	public Merchandise getMerchandise() {
 		return merchandise;
 	}

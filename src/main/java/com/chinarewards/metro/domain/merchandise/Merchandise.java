@@ -9,10 +9,12 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 
+import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonManagedReference;
 import org.hibernate.annotations.GenericGenerator;
 
 import com.chinarewards.metro.domain.brand.Brand;
@@ -60,9 +62,10 @@ public class Merchandise implements Serializable {
 
 	// 供应商名称
 	private String supplierName;
-
+	
+	@Column(updatable=false)
 	private Date createdAt;
-
+	@Column(updatable=false)
 	private Integer createdBy;
 
 	@Column(nullable = false)
@@ -74,7 +77,13 @@ public class Merchandise implements Serializable {
 	@OneToMany(mappedBy = "merchandise", fetch=FetchType.LAZY)
 	private Set<MerchandiseCatalog> merchandiseCatalogs;
 	
-	@OneToOne
+	@OneToMany(mappedBy = "merchandise", fetch=FetchType.LAZY)
+	private Set<MerchandiseSaleform> merchandiseSaleforms;
+	
+	@OneToMany(mappedBy = "merchandise", fetch=FetchType.LAZY)
+	private Set<MerchandiseFile> merchandiseFiles;
+	
+	@ManyToOne
 	private Brand brand;
 
 	public Double getPurchasePrice() {
@@ -100,7 +109,8 @@ public class Merchandise implements Serializable {
 	public void setFreight(Double freight) {
 		this.freight = freight;
 	}
-
+	
+	@JsonBackReference
 	public Brand getBrand() {
 		return brand;
 	}
@@ -180,7 +190,7 @@ public class Merchandise implements Serializable {
 	public void setCode(String code) {
 		this.code = code;
 	}
-	
+	@JsonManagedReference("Merchandise-MerchandiseCatalog")
 	public Set<MerchandiseCatalog> getMerchandiseCatalogs() {
 		return merchandiseCatalogs;
 	}
@@ -188,6 +198,26 @@ public class Merchandise implements Serializable {
 	public void setMerchandiseCatalogs(Set<MerchandiseCatalog> merchandiseCatalogs) {
 		this.merchandiseCatalogs = merchandiseCatalogs;
 	}
+	
+	@JsonManagedReference("Merchandise-MerchandiseSaleform")
+	public Set<MerchandiseSaleform> getMerchandiseSaleforms() {
+		return merchandiseSaleforms;
+	}
 
+	public void setMerchandiseSaleforms(
+			Set<MerchandiseSaleform> merchandiseSaleforms) {
+		this.merchandiseSaleforms = merchandiseSaleforms;
+	}
+	
+	@JsonManagedReference
+	public Set<MerchandiseFile> getMerchandiseFiles() {
+		return merchandiseFiles;
+	}
+
+	public void setMerchandiseFiles(Set<MerchandiseFile> merchandiseFiles) {
+		this.merchandiseFiles = merchandiseFiles;
+	}
+	
+	
 	
 }

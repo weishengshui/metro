@@ -111,7 +111,7 @@
 		var categoryVos = '${categoryVos}';
 		categoryVos = eval('('+categoryVos+')');
 		var timeParam = Math.round(new Date().getTime()/1000);
-		$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto">商品类别</td><td width="auto">上下架</td><td width="auto">类别排序</td>	<td width="auto">操作</td></tr></table>');
+		$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto">商品类别</td><td width="auto">上下架</td><td width="auto">类别排序</td><td width="120px">上下架时间</td><td width="auto">操作</td></tr></table>');
 		if(categoryVos && categoryVos.length > 0){
 			for(var i = 0, length = categoryVos.length; i < length; i++){
 				var displaySort = '<input name="displaySort" type="text" style="width:50px" ';
@@ -130,9 +130,9 @@
 					status='<select name="status" style="width:50px" ><option value="ON" selected="selected">上架</option><option value="OFF">下架</option></select>';
 				}else if(categoryVo.status == '<%=MerchandiseStatus.OFF.toString()%>'){
 					status='<select name="status" style="width:50px" ><option value="ON">上架</option><option value="OFF" selected="selected">下架</option></select>';
-				}
+				}on_offTime
 				
-				
+				var on_offtime = '<input type=text readonly="readonly" value=\"'++'\" />;
 				var str = '<tr>';
 				str += '<td  width="auto">' + categId +categoryName +'</td><td  width="auto">'+status +'</td><td  width="auto">' + displaySort +'</td><td width="auto">'+deleteBut+'</td>';
 				str += '</tr>';
@@ -148,20 +148,21 @@
 		$('#description2').val(editor.getContent());
 		$('#rmbPrice').validatebox({required: false});
 		$('#binkePrice').validatebox({required: false});
-		
+			
+		if($('#binke').attr('checked')){
+			$('#binkePrice').validatebox({required: true});
+		}
 		if($('#rmb').attr('checked')){
 			$('#rmbPrice').validatebox({required: true});
 			
-			if($('#binke').attr('checked')){
-				$('#binkePrice').validatebox({required: true});
-			}
-		}else if($('#binke').attr('checked')){
-			$('#binkePrice').validatebox({required: true});
-			
-			if($('#rmb').attr('checked')){
-				$('#rmbPrice').validatebox({required: true});
-			}
-		}else{
+		}
+		if($('#rmbPreferential').attr('checked')){
+			$('#rmbPreferentialPrice').validatebox({required: true});
+		}
+		if($('#binkePreferential').attr('checked')){
+			$('#binkePreferentialPrice').validatebox({required: true});
+		}
+		if(!$('#rmb').attr('checked') && !$('#binke').attr('checked')){
 			alert("至少选择一种售卖形式");
 			return;
 		}
@@ -184,7 +185,13 @@
 			}
 		});
 	}
-	
+	function checkCheckbox(obj, priceId){
+		if(obj.checked){
+			$('#'+priceId).validatebox({required: true});
+		}else{
+			$('#'+priceId).validatebox({required: false});
+		}
+	}
 	function check(path,spanId){
 		var filepath=path.value;
 		filepath=filepath.substring(filepath.lastIndexOf('.')+ 1,filepath.length);
@@ -332,6 +339,26 @@
 	function closeAddIamgeDialog(){
 		$('#addImage').dialog('close');
 	}
+	function addBrandDialog(){
+		$('#brandDialog').dialog('center');
+		$('#brandDialog').dialog('open');
+	}
+	function selectBrand(){
+		var row = $('#tt').datagrid('getSelected');
+		if(row){
+			$('#brandId').val(row.id);
+			$('#brandName').html(row.name);
+			$('#brandDialog').dialog('close');
+		}else{
+			alert("请选择一个品牌");
+			return;
+		}
+	}
+	function doSearch(){  
+		    $('#tt').datagrid('load',{  
+		    	name:$('#brandSearchName').val() 
+		    });  
+		}
 </script>
 
 </head>
@@ -376,6 +403,17 @@
 										</tr>
 										<tr>
 											<td width="20px"><span style="color: red;">*</span></td>
+											<td width="80px">运费：</td>
+											<td width="200px" align="left">
+												<input id="freight" name="freight" value="${merchandise.freight }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2,required:true" maxlength="10">  
+											</td>
+											<td ></td>
+											<td ></td>
+											<td ></td>
+											<td ></td>
+										</tr>
+										<tr>
+											<td width="20px"><span style="color: red;">*</span></td>
 											<td width="120px">商品介绍：</td>
 											<td align="left" colspan="5">
 												<textarea id="description"></textarea>
@@ -391,18 +429,36 @@
 							<fieldset style="font-size: 14px;width:1100px;;height:auto;">
 								<legend style="color: blue;">售卖形式</legend>
 								<c:choose>
-									<c:when test="${(!empty catalogs) && (fn:length(catalogs) > 0)}">
+									<c:when test="${(!empty saleforms) && (fn:length(saleforms) > 0)}">
 										<table border="0">
-											<c:if test="${fn:length(catalogs) == 2 }">
-												<c:forEach items="${catalogs }" var="catalog">
+											<c:if test="${fn:length(saleforms) == 2 }">
+												<c:forEach items="${saleforms }" var="saleform">
 													<c:choose>
-														<c:when test="${catalog.unitId =='0' }">
+														<c:when test="${saleform.unitId =='0' }">
 															<tr>
 																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
 																<td width="80px">正常售卖：</td>
 																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																		<input id="rmbPrice" name="rmbPrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
 																</td>
+																<c:choose>
+																	<c:when test="${ ! empty saleform.preferentialPrice }">
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" checked="checked" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
+																		<td width="120px">优惠价格：</td>
+																		<td width="200px">
+																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
+																		</td>																	
+																	</c:when>
+																	<c:otherwise>
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
+																		<td width="120px">优惠价格：</td>
+																		<td width="200px">
+																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
+																		</td>
+																	</c:otherwise>
+																</c:choose>
 															</tr>
 														</c:when>
 														<c:otherwise>
@@ -410,46 +466,112 @@
 																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
 																<td width="80px">积分兑换：</td>
 																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																		<input id="binkePrice" name="binkePrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
 																</td>
+																<c:choose>
+																	<c:when test="${ ! empty saleform.preferentialPrice }">
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" checked="checked" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
+																		<td width="120px">优惠兑换积分：</td>
+																		<td width="200px">
+																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
+																		</td>																	
+																	</c:when>
+																	<c:otherwise>
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
+																		<td width="120px">优惠兑换积分：</td>
+																		<td width="200px">
+																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
+																		</td>
+																	</c:otherwise>
+																</c:choose>
 															</tr>			
 														</c:otherwise>
 													</c:choose>										
 												</c:forEach>
 											</c:if>
-											<c:if test="${fn:length(catalogs) == 1 }">
-												<c:forEach items="${catalogs }" var="catalog">
+											<c:if test="${fn:length(saleforms) == 1 }">
+												<c:forEach items="${saleforms }" var="saleform">
 													<c:choose>
-														<c:when test="${catalog.unitId =='0' }">
+														<c:when test="${saleform.unitId =='0' }">
 															<tr>
-																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
+																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" onclick="checkCheckbox(this, 'rmbPrice')" /></td>
 																<td width="80px">正常售卖：</td>
 																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																		<input id="rmbPrice" name="rmbPrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
 																</td>
+																<c:choose>
+																	<c:when test="${ ! empty saleform.preferentialPrice }">
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" checked="checked" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
+																		<td width="120px">优惠价格：</td>
+																		<td width="200px">
+																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
+																		</td>																	
+																	</c:when>
+																	<c:otherwise>
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
+																		<td width="120px">优惠价格：</td>
+																		<td width="200px">
+																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
+																		</td>
+																	</c:otherwise>
+																</c:choose>
 															</tr>
 															<tr>
-																<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
+																<td width="20px"><input type="checkbox" name="binke" id="binke" onclick="checkCheckbox(this,'binkePrice')"/></td>
 																<td width="80px">积分兑换：</td>
 																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																		<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																</td>
+																<td width="20px"></td>
+																<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
+																<td width="120px">优惠兑换积分：</td>
+																<td width="200px">
+																		<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
 																</td>
 															</tr>
 														</c:when>
 														<c:otherwise>
 															<tr>
-																<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
+																<td width="20px"><input type="checkbox" name="rmb" id="rmb" onclick="checkCheckbox(this, 'rmbPrice')"/></td>
 																<td width="80px">正常售卖：</td>
 																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																		<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+																</td>
+																<td width="20px"></td>
+																<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
+																<td width="120px">优惠价格：</td>
+																<td width="200px">
+																		<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
 																</td>
 															</tr>
 															<tr>
-																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
+																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked" onclick="checkCheckbox(this, 'binkePrice')"/></td>
 																<td width="80px">积分兑换：</td>
 																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" value="${catalog.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+																		<input id="binkePrice" name="binkePrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
 																</td>
+																<c:choose>
+																	<c:when test="${ ! empty saleform.preferentialPrice }">
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" checked="checked" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
+																		<td width="120px">优惠兑换积分：</td>
+																		<td width="200px">
+																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
+																		</td>																	
+																	</c:when>
+																	<c:otherwise>
+																		<td width="20px"></td>
+																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
+																		<td width="120px">优惠兑换积分：</td>
+																		<td width="200px">
+																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
+																		</td>
+																	</c:otherwise>
+																</c:choose>
 															</tr>
 														</c:otherwise>
 													</c:choose>
@@ -460,17 +582,29 @@
 									<c:otherwise>
 										<table border="0">
 											<tr>
-												<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
+												<td width="20px"><input type="checkbox" name="rmb" id="rmb" onclick="checkCheckbox(this, 'rmbPrice')"/></td>
 												<td width="80px">正常售卖：</td>
 												<td width="200px">
-														<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2" maxlength="20">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+														<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+												</td>
+												<td width="20px"></td>
+												<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
+												<td width="120px">优惠价格：</td>
+												<td width="200px">
+														<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
 												</td>
 											</tr>
 											<tr>
-												<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
+												<td width="20px"><input type="checkbox" name="binke" id="binke" onclick="checkCheckbox(this,'binkePrice')"/></td>
 												<td width="80px">积分兑换：</td>
 												<td width="200px">
-														<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.001,precision:2" maxlength="20">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+														<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+												</td>
+												<td width="20px"></td>
+												<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
+												<td width="120px">优惠兑换积分：</td>
+												<td width="200px">
+														<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
 												</td>
 											</tr>
 										</table>		
@@ -496,6 +630,24 @@
 													
 											</div>
 										</td>
+									</tr>
+								</table>
+							</fieldset>
+						</td>
+					</tr>
+					<tr>
+						<td width="1200px">
+							<fieldset style="font-size: 14px;width:1100px;height:auto;">
+								<legend style="color: blue;">所属品牌</legend>
+								<table border="0">
+									<tr>
+										<td width="20px"></td>
+										<td width="100px">品牌名称：</td>
+										<td width="150px" align="left">
+											<input id="brandId" name="brand.id" type="hidden" value="${merchandise.brand.id }">
+											<span id="brandName" >${merchandise.brand.name }</span>
+										</td>
+										<td><button type="button" onclick="addBrandDialog()">选择</button></td>
 									</tr>
 								</table>
 							</fieldset>
@@ -772,11 +924,51 @@
 			</div>
 	    </div>
 	</div>
-	<div id="imageDia" class="easyui-dialog" title="图片预览" style="width:400px;height:400px;"  
-        data-options="iconCls:'icon-add',resizable:true,modal:true,inline:false,closed:true">
-	        <div style="text-align:center;">
-	        	<img id="perviewImage" name="perviewImage" src="" />
-	        </div>
+	<div id="brandDialog" class="easyui-dialog" title="新增商品-品牌选择" style="width:600px;height:550px;text-align:center;"  
+        data-options="resizable:false,modal:true,closed:true">  
+        <table border="0">
+			<tr>
+				<td>
+					<fieldset style="font-size: 14px;width:auto;height:auto;">
+						<legend style="color: blue;">查询条件</legend>
+						<form action="" >
+							<table border="0">
+								<tr>
+									<td width="140px">品牌名称：</td>
+									<td width="200px" align="left">
+										<input id="brandSearchName" type="text" style="width:150px"/> 
+									</td>
+									<td>
+										<button type="button" onclick="doSearch()">查询</button>
+									</td>
+								</tr>
+							</table>
+						</form>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<fieldset style="font-size: 14px;width:auto;height:auto;">
+						<legend style="color: blue;">查询结果</legend>
+						<table id="tt" class="easyui-datagrid" width="100%" height="100%" 
+	           				url="<%=request.getContextPath()%>/brand/list" rownumbers="true" pagination="true" singleSelect="true">   
+	       					<thead>  
+	           				<tr>  
+		           				<th field="id" checkbox="true"></th> 
+		                		<th data-options="field:'name',width:100">品牌名称</th>
+		                		<th data-options="field:'companyName',width:100">公司名称</th>
+		                		<th data-options="field:'createdAt',width:120,formatter:function(v,r,i){return dateFormat(v);}" >创建时间</th>
+				           	</tr>  
+					       	</thead>  
+				   		</table> 
+					</fieldset>
+				</td>
+			</tr>
+		</table>
+        <div style="position: absolute;top: 500px;left:450px;text-align:right;">
+        	<button type="button" onclick="selectBrand()">确定</button>&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" onclick="javascript:$('#brandDialog').dialog('close');">关闭</button>
+        </div>
 	</div> 
 	<div id="dd" class="easyui-dialog" title="选择商品类别" style="width:400px;height:400px;"  
         data-options="resizable:false,modal:true,closed:true">  

@@ -20,13 +20,12 @@
 	textarea{font-size:13px;}
 </style>
 <script type="text/javascript">
-	
+	var v = true;
 	function save(){
 		var shopId = parent.getId();
 		if(shopId == 0){
 			alert('请先保存门店');return false;
 		}
-		alert(shopId);
 		if(validate() && validate1()){
 			accept();
 			accept1();
@@ -42,6 +41,18 @@
 	        if(posinserted=='[]'){posinserted = '';};
 	        if(posdeleted=='[]'){posdeleted = '';};
 	        if(posupdated=='[]'){posupdated = '';};
+	        //delete
+	        /*
+	        var ss = $('#dg1').datagrid('getChanges', "deleted");
+	        if(ss.length > 0){
+	        	var posdeleted = '[';
+	        	for(var i=0;i<ss.length;i++){
+		        	if(posdeleted!='[') posdeleted +=","; 
+		        	posdeleted += '{"id":'+ss[i].id+'}';
+		        }
+	        	posdeleted += ']';
+	        }
+	        */
 	        if(typeinserted =='' && posinserted=='' && typedeleted=='' && posdeleted=='' && posupdated=='' && typeupdated==''){
 		        alert('请添加消费类型或pos机');return false;
 		    }
@@ -49,18 +60,25 @@
      	   		   "&posinserted="+posinserted+"&posdeleted="+posdeleted+"&posupdated="+posupdated+"&shopId="+shopId;
 	     	
 	        $.post("saveTypeAndPost?"+json, function(rsp) {
-	        	$('#dg').datagrid('load',{});
-	        	$('#dg1').datagrid('load',{});
 	        	alert('保存成功!');
+	        	$('#dg').datagrid('load',{shopId_:shopId});
+	        	$('#dg1').datagrid('load',{shopId_:shopId});
 	        }, "JSON").error(function() {
 	           $.messager.alert("提示", "提交错误了！");
 	        });
 			return false;
 		}
     }
+	function init(){ //jie jue IE xia bu xianshi
+		if(v){
+			$('#dg').datagrid('load',{});
+        	$('#dg1').datagrid('load',{});
+		}
+		v = false;
+	}
 </script>
 </head>
-<body style="padding:10px;">
+<body style="padding:10px;" onmousemove="init()">
 	  <fieldset style="font-size:14px;">
 	  	<legend style="color: blue;">消费类型</legend>
 	  	<table id="dg" class="easyui-datagrid" style="width:500px;height:auto;"  

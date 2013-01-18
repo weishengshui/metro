@@ -1,5 +1,7 @@
 package com.chinarewards.metro.model.merchandise;
 
+import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
+
 //售卖形式VO
 public class SaleFormVo {
 
@@ -13,6 +15,13 @@ public class SaleFormVo {
 		this.price = price;
 		this.preferentialPrice = preferentialPrice;
 	}
+	
+	public SaleFormVo(MerchandiseSaleform saleform) {
+		this.unitId = saleform.getUnitId();
+		this.price = saleform.getPrice();
+		this.preferentialPrice = saleform.getPreferentialPrice();
+	}
+	
 
 	public String getUnitId() {
 		return unitId;

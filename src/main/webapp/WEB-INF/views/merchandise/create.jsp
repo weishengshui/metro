@@ -81,22 +81,20 @@
 			alert("请选择基本图片");
 			return;
 		} */
-		$('#rmbPrice').validatebox({required: false});
-		$('#binkePrice').validatebox({required: false});
-		
+		if($('#binke').attr('checked')){
+			$('#binkePrice').validatebox({required: true});
+		}
 		if($('#rmb').attr('checked')){
 			$('#rmbPrice').validatebox({required: true});
 			
-			if($('#binke').attr('checked')){
-				$('#binkePrice').validatebox({required: true});
-			}
-		}else if($('#binke').attr('checked')){
-			$('#binkePrice').validatebox({required: true});
-			
-			if($('#rmb').attr('checked')){
-				$('#rmbPrice').validatebox({required: true});
-			}
-		}else{
+		}
+		if($('#rmbPreferential').attr('checked')){
+			$('#rmbPreferentialPrice').validatebox({required: true});
+		}
+		if($('#binkePreferential').attr('checked')){
+			$('#binkePreferentialPrice').validatebox({required: true});
+		}
+		if(!$('#rmb').attr('checked') && !$('#binke').attr('checked')){
 			alert("至少选择一种售卖形式");
 			return;
 		}
@@ -121,7 +119,13 @@
 			}
 		});
 	}
-	
+	function checkCheckbox(obj, priceId){
+		if(obj.checked){
+			$('#'+priceId).validatebox({required: true});
+		}else{
+			$('#'+priceId).validatebox({required: false});
+		}
+	}
 	function check(path,spanId){
 		var filepath=path.value;
 		filepath=filepath.substring(filepath.lastIndexOf('.')+ 1,filepath.length);
@@ -140,52 +144,6 @@
 		$('#dd').dialog('center');
 		$('#dd').dialog('open');
 	}
-	function previewImage(imageId){
-    	
-		if($('#'+imageId).val()==''){
-			alert("请先添加图片");
-			return;
-		}
-		var width, height;
-		if(imageId == 'overview'){
-			width = '346px';
-			height = '346px';
-		}else{
-			width = '146px';
-			height = '146px';
-		}
-		var input = document.getElementById(imageId);
-		var imgPre = document.getElementById('perviewImage');
-		if($.browser.msie){
-			input.select();
-			var url = document.selection.createRange().text;
-			var imgDiv = document.createElement("div");
-			imgDiv.setAttribute("id",imgPre.id);
-			var parent = imgPre.parentNode;
-			parent.appendChild(imgDiv);
-			parent.removeChild(imgPre);
-		    imgDiv.style.width = width;    
-			imgDiv.style.height = height;
-		    imgDiv.style.filter="progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod = scale)";   
-		    imgDiv.filters.item("DXImageTransform.Microsoft.AlphaImageLoader").src = url;
-		}else {
-			if (input.files && input.files[0]) {
-	        	var reader = new FileReader();
-	            reader.onload = function (e) {
-	                    $('#perviewImage').attr('src', e.target.result);
-	                    $('#perviewImage').attr('width', width);
-	                    $('#perviewImage').attr('height', height);
-	                };
-	                reader.readAsDataURL(input.files[0]);
-	        } 
-		}
-		$('#imageDia').resizable({  
-		    maxWidth:20,  
-		    maxHeight:100  
-		}); 
-		$('#imageDia').dialog('center');
-		$('#imageDia').dialog('open');
-	}
 	function selectCategory(){
 		var nodes = $('#tt2').tree('getChecked');
 		if(nodes){
@@ -202,7 +160,7 @@
 				var deleteBut='<button type="button" onclick="deleteCategory(this)">删除</button>';
 				//var categoryTable = '';
 				var timeParam = Math.round(new Date().getTime()/1000);
-				$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto">商品类别</td><td width="auto">上下架</td><td width="auto">类别排序</td>	<td width="auto">上下架时间</td><td width="auto">操作</td></tr></table>');
+				$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto">商品类别</td><td width="auto">上下架</td><td width="auto">类别排序</td><td width="auto">上下架时间</td><td width="auto">操作</td></tr></table>');
 				for(var i = 0; i < nodes.length; i++){
 					var displaySort = '<input name="displaySort" type="text" style="width:50px" ';
 					var node = nodes[i];
@@ -335,6 +293,11 @@
 			return;
 		}
 	}
+	function doSearch(){  
+		    $('#tt').datagrid('load',{  
+		    	name:$('#brandSearchName').val() 
+		    });  
+		}
 </script>
 
 </head>
@@ -407,26 +370,26 @@
 								<legend style="color: blue;">售卖形式</legend>
 								<table border="0">
 									<tr>
-										<td width="20px"><input type="checkbox" name="rmb" id="rmb" /></td>
+										<td width="20px"><input type="checkbox" name="rmb" id="rmb" onclick="checkCheckbox(this, 'rmbPrice')"/></td>
 										<td width="80px">正常售卖：</td>
 										<td width="200px">
 												<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
 										</td>
 										<td width="20px"></td>
-										<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" /></td>
+										<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
 										<td width="120px">优惠价格：</td>
 										<td width="200px">
 												<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
 										</td>
 									</tr>
 									<tr>
-										<td width="20px"><input type="checkbox" name="binke" id="binke"/></td>
+										<td width="20px"><input type="checkbox" name="binke" id="binke" onclick="checkCheckbox(this,'binkePrice')"/></td>
 										<td width="80px">积分兑换：</td>
 										<td width="200px">
 												<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
 										</td>
 										<td width="20px"></td>
-										<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" /></td>
+										<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
 										<td width="120px">优惠兑换积分：</td>
 										<td width="200px">
 												<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
@@ -765,7 +728,7 @@
 								<tr>
 									<td width="140px">品牌名称：</td>
 									<td width="200px" align="left">
-										<input id="name" name="name" type="text" style="width:150px"/> 
+										<input id="brandSearchName" type="text" style="width:150px"/> 
 									</td>
 									<td>
 										<button type="button" onclick="doSearch()">查询</button>

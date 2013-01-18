@@ -62,7 +62,7 @@
 		var reset =  '<a href="javascript:void(0)" onclick="editPassword(\''+r.userName+'\',\''+v+'\')">重置密码</a>&nbsp;&nbsp;';
 		var lock = '<a href="javascript:void(0)" onclick="lock(\''+v+'\',\'<%=Dictionary.USER_STATE_LOCKED%>\')">锁定</a>&nbsp;&nbsp;';
 		if(r.disable == '<%=Dictionary.USER_STATE_LOCKED%>'){
-			lock = '<a href="javascript:void(0)" onclick="lock(\''+v+'\',\'<%=Dictionary.USER_STATE_NORMAL%>\')">启动</a>&nbsp;&nbsp;';
+			lock = '<a href="javascript:void(0)" onclick="lock(\''+v+'\',\'<%=Dictionary.USER_STATE_NORMAL%>\')">启用</a>&nbsp;&nbsp;';
 		}
 		var addRole = '<a href="javascript:void(0)" onclick="addRole(\''+v+'\')">添加角色</a>';
 		return  reset+lock+addRole;
@@ -70,7 +70,7 @@
 	function lock(id,disable){
 		var c = '锁定';
 		if(disable == 0){
-			c = '启动';
+			c = '启用';
 		}
 		$.messager.confirm('确认框','确定要'+c+'这个用户吗 ?',function(r){  
 		    if (r){
@@ -80,6 +80,7 @@
 		        	dataType:'json',
 		        	data:"id="+id+"&disable="+disable,
 		        	success:function(data){
+		        		alert("操作成功");
 		        		$('.easyui-datagrid').datagrid('reload');
 		        	}
 				});

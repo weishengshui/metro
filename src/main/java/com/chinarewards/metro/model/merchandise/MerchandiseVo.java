@@ -1,15 +1,16 @@
 package com.chinarewards.metro.model.merchandise;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import com.chinarewards.metro.domain.category.Category;
-import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
+import com.chinarewards.metro.domain.merchandise.Merchandise;
+import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
 
 public class MerchandiseVo {
-
-	private String mId; // 商品ID
-	private String mcId; // 兑换商品ID
-
+	
+	private String id;
+	
 	// 商品编号
 	private String code;
 
@@ -19,49 +20,63 @@ public class MerchandiseVo {
 	// 商品名称
 	private String name;
 
-	private String description;
+	// 品牌名称
+	private String brandName;
 
-	// **********************************
-	// 采购单价
-	private String purchasePrice;
+	// 售卖形式
+	private List<SaleFormVo> saleFormVos = new ArrayList<SaleFormVo>();
 
-	// 供应商名称
-	private String supplierName;
+	// 采购价
+	private Double purchasePrice;
 
-	// 商品类别
-	private Category category;
-
-	private Date createdAt;
-
-	private String createdBy;
-
-	private Date lastModifiedAt;
-
-	private String lastModifiedBy;
-
-	private double price;
-
-	// 兑换单位(RMB，缤刻)
-	private String unitId;
-
-	private MerchandiseStatus status;
-
-	private long displaySort;
-
-	public String getMId() {
-		return mId;
+	public MerchandiseVo() {
 	}
 
-	public void setMId(String mId) {
-		this.mId = mId;
+	public MerchandiseVo(Merchandise merchandise) {
+		this.id = merchandise.getId();
+		this.code = merchandise.getCode();
+		this.name = merchandise.getName();
+		this.model = merchandise.getModel();
+		if (null != merchandise.getBrand()) {
+			this.brandName = merchandise.getBrand().getName();
+		} else {
+			this.brandName = "";
+		}
+		this.purchasePrice = merchandise.getPurchasePrice();
+		
+		Set<MerchandiseSaleform> saleforms = merchandise.getMerchandiseSaleforms();
+		if(null != saleforms && saleforms.size() > 0){
+			for(MerchandiseSaleform saleform : saleforms){
+				this.saleFormVos.add(new SaleFormVo(saleform));
+			}
+		}
+	}
+	
+	public MerchandiseVo(MerchandiseSaleform merchandiseSaleform) {
+		
+		Merchandise merchandise = merchandiseSaleform.getMerchandise();
+		
+		this.id = merchandise.getId();
+		this.code = merchandise.getCode();
+		this.name = merchandise.getName();
+		this.model = merchandise.getModel();
+		if (null != merchandise.getBrand()) {
+			this.brandName = merchandise.getBrand().getName();
+		} else {
+			this.brandName = "";
+		}
+		this.purchasePrice = merchandise.getPurchasePrice();
+		
+		this.saleFormVos.add(new SaleFormVo(merchandiseSaleform));
+	}
+	
+	
+	public String getId() {
+		return id;
 	}
 
-	public String getMcId() {
-		return mcId;
-	}
-
-	public void setMcId(String mcId) {
-		this.mcId = mcId;
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getCode() {
@@ -88,100 +103,28 @@ public class MerchandiseVo {
 		this.name = name;
 	}
 
-	public String getDescription() {
-		return description;
+	public String getBrandName() {
+		return brandName;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	public void setBrandName(String brandName) {
+		this.brandName = brandName;
 	}
 
-	public String getPurchasePrice() {
+	public List<SaleFormVo> getSaleFormVos() {
+		return saleFormVos;
+	}
+
+	public void setSaleFormVos(List<SaleFormVo> saleFormVos) {
+		this.saleFormVos = saleFormVos;
+	}
+
+	public Double getPurchasePrice() {
 		return purchasePrice;
 	}
 
-	public void setPurchasePrice(String purchasePrice) {
+	public void setPurchasePrice(Double purchasePrice) {
 		this.purchasePrice = purchasePrice;
-	}
-
-	public String getSupplierName() {
-		return supplierName;
-	}
-
-	public void setSupplierName(String supplierName) {
-		this.supplierName = supplierName;
-	}
-
-	public Category getCategory() {
-		return category;
-	}
-
-	public void setCategory(Category category) {
-		this.category = category;
-	}
-
-	public Date getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public String getCreatedBy() {
-		return createdBy;
-	}
-
-	public void setCreatedBy(String createdBy) {
-		this.createdBy = createdBy;
-	}
-
-	public Date getLastModifiedAt() {
-		return lastModifiedAt;
-	}
-
-	public void setLastModifiedAt(Date lastModifiedAt) {
-		this.lastModifiedAt = lastModifiedAt;
-	}
-
-	public String getLastModifiedBy() {
-		return lastModifiedBy;
-	}
-
-	public void setLastModifiedBy(String lastModifiedBy) {
-		this.lastModifiedBy = lastModifiedBy;
-	}
-
-	public double getPrice() {
-		return price;
-	}
-
-	public void setPrice(double price) {
-		this.price = price;
-	}
-
-	public String getUnitId() {
-		return unitId;
-	}
-
-	public void setUnitId(String unitId) {
-		this.unitId = unitId;
-	}
-
-	public MerchandiseStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(MerchandiseStatus status) {
-		this.status = status;
-	}
-
-	public long getDisplaySort() {
-		return displaySort;
-	}
-
-	public void setDisplaySort(long displaySort) {
-		this.displaySort = displaySort;
 	}
 
 }

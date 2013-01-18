@@ -14,60 +14,44 @@
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery/jquery-1.8.0.min.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery/jquery.easyui.min.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery/locale/easyui-lang-zh_CN.js"></script>
-<script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery/extend-easyui-validate.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/common.js"></script>
+<script type="text/javascript" src="<%=request.getContextPath()%>/js/map.js"></script>
 	<script type="text/javascript">
-		function check(path,spanId){
-			var filepath=path.value;
-			filepath=filepath.substring(filepath.lastIndexOf('.')+ 1,filepath.length);
-			filepath = filepath.toLocaleLowerCase();
-			if(filepath != 'jpg' && filepath != 'gif' && filepath!='jpeg' && filepath !='bmp' && filepath!='png'){
-				alert("只能上传JPG, GIF, JPEG, BMP, PNG 格式的图片");
-				deleteImage(path.name, path.id, spanId);
-			}
+	var baseURL = '<%=request.getContextPath()%>';
+	
+	function show(url,width,height){
+		width = width> 500 ? 500: width;
+		height = height> 700 ? 500: height;
+		$("#openIframe").attr("src",url);
+		$("#divDialog").dialog({
+			height:height,
+			width:width,
+			modal:true,
+			resizable:true,
+			title:'预览图片'
+		});
+	}
+	
+	
+	
+	$(function(){
+		style="display:none";
+    	document.getElementById('divPreview').style.display = "none";
+		var pictureName = '${activity.picture }';
+		var typePic = pictureName.substring(pictureName.lastIndexOf(".")+1, pictureName.length);
+		if(pictureName && pictureName!=""){
+			var width = 300,height =300;
+			//$('#'+preArray[0]).val(i);
+			$('#aimage1').attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=ACTIVITY_IMAGE_DIR&contentType='+typePic+'&fileName='+pictureName+'\',\''+width+'\',\''+height+'\')');
+			$('#image1').attr('src',baseURL+'/archive/showGetthumbPic?path=ACTIVITY_IMAGE_DIR&contentType='+typePic+'&fileName='+pictureName+'');
+			style="display:none";
+	    	document.getElementById('divPreview').style.display = "";
+		}else{
+			style="display:none";
+	    	document.getElementById('divPreview').style.display = "none";
 		}
-		
-		function previewImage(imageId){
-	    	
-			if($('#'+imageId).val()==''){
-				alert("请先添加图片");
-				return;
-			}
-			var width, height;
-			if(imageId == 'overview'){
-				width = '346px';
-				height = '346px';
-			}else{
-				width = '246px';
-				height = '246px';
-			}
-			var input = document.getElementById(imageId);
-			var imgPre = document.getElementById('img1');
-			if($.browser.msie){
-				input.select();
-				var url = document.selection.createRange().text;
-				var imgDiv = document.createElement("div");
-				imgDiv.setAttribute("id",imgPre.id);
-				var parent = imgPre.parentNode;
-				parent.appendChild(imgDiv);
-				parent.removeChild(imgPre);
-			    imgDiv.style.width = width;    
-				imgDiv.style.height = height;
-			    imgDiv.style.filter="progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod = scale)";   
-			    imgDiv.filters.item("DXImageTransform.Microsoft.AlphaImageLoader").src = url;
-			}else {
-				if (input.files && input.files[0]) {
-		        	var reader = new FileReader();
-		            reader.onload = function (e) {
-		                    $('#img1').attr('src', e.target.result);
-		                    $('#img1').attr('width', width);
-		                    $('#img1').attr('height', height);
-		                };
-		                reader.readAsDataURL(input.files[0]);
-		        } 
-			}
-		}
-		
+	}
+);
 		function getId(){
 			return $("#id").val();
 		}
@@ -91,6 +75,7 @@
 			});
 			
 			$('#updateActivity').click(function(){
+				var name = $("input[name='activityName']").val();
 				var startDate = $("input[name='startDate']").val();
 				var endDate = $("input[name='endDate']").val();
 				
@@ -103,7 +88,26 @@
 					alert("请选择结束时间！");
 					return false ;
 				}
+				/* var tag = false ;
+				$.ajax({
+		            url:'checkActNameAndTime',
+		            type:'post',
+		            async: false,
+		            data:{
+		            	name:name,
+		            	dTime:startDate
+		            },
+		            success:function(data){
+		            	if(data == 1){
+		            		tag = true ;
+		            	}
+		            }
+		        });
 				
+				if(tag){
+					alert("活动名称和开始日期不能相同！");
+					return false ;
+				} */
 				$('#updateForm').form('submit', {
 				    url:'update',
 				    success:function(data){ 
@@ -119,7 +123,6 @@
 			
 			$('#delAct').click(function(){
 				var data ='';
-				//var rows = $('#table1').datagrid('getSelections');
 				var rows = $('#table1').datagrid('getChecked');
 				for(var i in rows){
 					data += rows[i].gid+',';
@@ -223,7 +226,7 @@
 		            	bindDate:bindDate
 		            },
 		            beforeSend:function(){
-		            	var flag ;
+		            	var flag = false;
 		            	$.ajax({
 		    	            url:'checkPosBand',
 		    	            type:'post',
@@ -255,16 +258,95 @@
 			});
 			
 		});
+		
+		function check(path,spanId){
+			var filepath=path.value;
+			filepath=filepath.substring(filepath.lastIndexOf('.')+ 1,filepath.length);
+			filepath = filepath.toLocaleLowerCase();
+			if(filepath != 'jpg' && filepath != 'gif' && filepath!='jpeg' && filepath !='bmp' && filepath!='png'){
+				alert("只能上传JPG, GIF, JPEG, BMP, PNG 格式的图片");
+				deleteInputFile(path.name, path.id, spanId);
+			}
+		}
+		function uploadImage(fileId,formId, keyId, aimageId,imageId, divPreviewId){
+			if($('#'+fileId).val()==""){
+				alert("请先添加图片");
+				return ;
+			}
+			$('#'+formId).form('submit',{
+				success:function(result){
+					result = eval('('+result+')');
+					if(!result.key){
+						alert("请检查图片是否是完好的");
+						return;
+					}
+					$('#'+keyId).val(result.key);
+					$('#imageSessionName_dataForm').val(result.imageSessionName);
+					$('#imageSessionName_imageForm').val(result.imageSessionName);
+					$('#'+aimageId).attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=ACTIVITY_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url+'\',\''+result.width+'\',\''+result.height+'\')');
+					$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=ACTIVITY_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
+					style="display:none";
+			    	document.getElementById(divPreviewId).style.display = "";
+				}
+			}); 
+		}
+		function deleteImage(keyId, divPreviewId){ 
+			$.ajax({
+				url:baseURL+'/archive/deleteImage',
+				data:'imageSessionName='+$('#imageSessionName_imageForm').val()+'&key='+$('#'+keyId).val(),
+				dataType:'json',
+				async:false,
+				success:function(data){
+				}
+			});
+			style="display:none";
+	    	document.getElementById(divPreviewId).style.display = "none";
+		}
+		function deleteInputFile(name, id, spanId){// 清空input type=file 直接$('#'+imageId).val('');有浏览器不兼容的问题
+			$('#'+spanId).html("<input type=file name="+ name +" id="+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
+		}
 	</script>
 </head>
 <body>
 <div id="tabAct" class="easyui-tabs" style="width:650px;height:550px">  
+		<div title="上传活动图片" style="padding:20px;text-align:center;"><!-- 图片维护start -->
+			<div style="">
+		        	<form action="<%=request.getContextPath()%>/archive/imageUpload" id="fm2" method="post" enctype="multipart/form-data">
+				    	<table>
+				    	<tr>
+							<td width="20px"></td>
+							<td width="80px">请选择图片：</td>
+							<td width="200px" align="left">
+								<input type="hidden" name="path" value="ACTIVITY_IMAGE_BUFFER">
+								<input type="hidden" name="key" id="key" />
+								<input type="hidden" name="imageSessionName" id="imageSessionName_imageForm" value="${imageSessionName }">
+								<span id="span1">
+									<input type="file" name="file" id="file1" accept="image/*" onchange="check(this,'span1')">
+								</span>
+							</td>
+							<td width="80px">&nbsp;&nbsp;
+							<a href="javascript:void(0)" onclick="uploadImage('file1','fm2', 'key', 'aimage1','image1','divPreview')" class="easyui-linkbutton" >上传</a>
+							</td>
+						</tr>
+				    </table>
+			    </form>
+	        </div><br><br>
+			<div align="left">图片预览：</div>
+	    	<div id="divPreview" >
+				<a id="aimage1" href=""><img id="image1" src="" style="width: 400px;height: 250px;"></a><br><br><br>
+				<a href="javascript:void(0)" onclick="deleteImage('key','divPreview')" class="easyui-linkbutton" >删除</a>
+			</div>
+		    <div id="divDialog">
+		    	<iframe scrolling="auto" id='openIframe' name="openIframe" frameborder="0"  src="" style="width:100%;height:100%;overflow: hidden;"></iframe> 
+			</div>
+	    </div><!-- 图片维护end --> 
         <div title="活动信息新增" style="padding:10px">  
             <form id="updateForm" method="post" enctype="multipart/form-data">
             <fieldset>
 			<legend style="color: blue;">活动基本信息</legend>
 		     <table style="width: 600px;" >
 		        	<tr>
+		        	<input type="hidden" name="imageSessionName" id="imageSessionName_dataForm" value="${imageSessionName }">
 		        	<input type="hidden" id="id" name="id" value="${activity.id }"/>
 		        		<td><span style="font-weight: bolder;color: red;">*</span>活动名称：</td>
 		        		<td><input id="activityName" value="${activity.activityName }" class="easyui-validatebox" data-options="required:true" name="activityName" type="text" style="width: 211px;"/></td>
@@ -302,13 +384,6 @@
 		        		<td>&nbsp;联系电话：</td>
 		        		<td><input id="conTel" name="conTel" type="text" value="${activity.conTel }" style="width: 211px;" class="easyui-validatebox" data-options="validType:'phoneNumber'"/></td>
 		        	</tr>
-		        	<tr>
-		        		<td>&nbsp;图片：</td>
-		        		<td><span id="pic"><input id="picture" value="${activity.picture }" name="picture" type="file" style="width: 211px;" onchange="check(this,'pic')"/></span></td>
-		        		<td></td>
-		        		<td><a id="lookbtn" href="javascript:void(0)" onclick="previewImage('picture')" class="easyui-linkbutton" >浏览</a></td>
-		        	</tr>
-		        	<tr></tr>
 		        </table>
 		        </fieldset>
 		        <br>
@@ -353,7 +428,7 @@
 			    <thead>  
 			        <tr>  
 			        	<th checkbox="true"></th>
-			        	<th data-options="field:'gid',width:30">活动编号</th>
+			        	<th data-options="field:'gid',width:30,hidden:true">活动编号</th>
 			            <th data-options="field:'name',width:30">品牌名称</th>  
 			            <th data-options="field:'companyName',width:30">公司名称</th>
 			            <th data-options="field:'joinTime',width:30,formatter:function(v){return dateFormat(v);}">加入时间</th>
@@ -374,7 +449,7 @@
 			        	<th checkbox="true"></th>
 			        	<th data-options="field:'id',width:30,hidden:true">POS机编号</th>
 			        	<th data-options="field:'code',width:30">POS机号</th>
-			            <th data-options="field:'bindDate',width:30,formatter:function(v){return dateFormat(v);}">绑定时间</th>
+			            <th data-options="field:'bindDate',width:30,formatter:function(v){return v;}">绑定时间</th>
 			        </tr>  
 			    </thead>  
 			</table>  
@@ -384,7 +459,7 @@
         </div>  
     </div> 
 	<div id="win" class="easyui-window" title="选择参与活动的品牌" style="width:600px;height:350px"  
-	        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false,">  
+	        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false">  
 	    	<form id="searchForm2" method="post" >
 				<fieldset>
 					<legend style="color: blue;">查询条件</legend>
@@ -405,11 +480,11 @@
 
 			<!-- 显示列表Table -->
 			<table id="table2" style="height:200px" idField="name" style="" class="easyui-datagrid" data-options="url:'findBrandNotBandAct',queryParams:{id:${activity.id }},fitColumns:true,striped:true,loadMsg:'正在载入...',pagination:true,
-				rownumbers:true,pageList:pageList,singleSelect:false,onDblClickRow:function(rowIndex,rowData){edit(rowData.id,rowData.name);}">
+				rownumbers:true,pageList:pageList,singleSelect:false">
 			    <thead>  
 			        <tr>  
 			        	<th field="ck" checkbox="true"></th>
-			        	<th data-options="field:'id',width:30">品牌编号</th> 
+			        	<th data-options="field:'id',width:30,hidden:true">品牌编号</th> 
 			            <th data-options="field:'name',width:30">品牌名称</th>  
 			            <th data-options="field:'companyName',width:30">公司名称</th>
 			        </tr>  
@@ -422,7 +497,7 @@
 	
 	</table>
 	<div id="winPos" class="easyui-window" title="添加绑定的POS机" style="width:250px;height:140px"  
-        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false,"> 
+        data-options="modal:true,closed:true,collapsible:false,minimizable:false,maximizable:false"> 
         <br>
         <form id="posForm">
         	<table>

@@ -87,10 +87,10 @@
 		            ">
         <thead>
             <tr>
-            	<th data-options="field:'id',hidden:true">id</th>
+            	<th data-options="field:'id',hidden:true,width:10">id</th>
                 <th data-options="field:'activeDate',width:80,align:'left'">导入时间</th>          
-                <th data-options="field:'note',width:80,">说明</th>
-                <th data-options="field:'allCount',width:80,">总数</th>
+                <th data-options="field:'note',width:80">说明</th>
+                <th data-options="field:'allCount',width:80">总数</th>
                 <th data-options="field:'validateCount',width:80,formatter:function(v){return validateCount(v);}">已验证数</th>  
                 <th data-options="field:'op',align:'center',width:50,formatter:function(v,o,i){return viewoperation(v,o,i);}">操作</th>
             </tr>

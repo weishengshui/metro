@@ -19,7 +19,7 @@
 	textarea{font-size:13px;}
 </style>
 <script type="text/javascript">
-	var deleted = "";
+	var deleted = "",v = true;;
 	function addDialog(){
 		$("#site").dialog({
 			height:320,
@@ -52,8 +52,8 @@
 	        if(json=='[]'){alert('请选择品牌');return;};
 	        
 	        $.post("saveShopBrand?"+json, function(rsp) {
-	        	$('#dg').datagrid('load',{});
-	           	alert('保存成功!');
+	        	alert('保存成功!');
+	        	$('#dg').datagrid('load',{shopId_:shopId});
 	        }, "JSON").error(function() {
 	            alert("保存错误了！");
 	        });
@@ -78,9 +78,15 @@
 			return v;
 		}
 	}
+	function init(){ //	jie jue ie XIA BU XIANSHI
+		if(v){
+			$('#dg').datagrid('load',{});
+		}
+		v = false;
+	}
 </script>
 </head>
-<body style="padding:10px;">
+<body style="padding:10px;" onmousemove="init()">
 	<form style="font-size:14px;">
 	  	<table id="dg" class="easyui-datagrid" style="width:550px;height:auto"  
 		            data-options="  

@@ -175,6 +175,13 @@
 			  				<input id="email" name="email" type='text' value="${member.email}" class="easyui-validatebox" data-options="validType:'email'"  />
 			  			</td>
 			  		</tr>
+			  		<tr>
+			  			<td></td>
+			  			<td>激活手机：</td>
+			  			<td>
+			  				<input type='text' value="" disabled="disabled"/>
+			  			</td>
+			  		</tr>
 			  	</table>
 			  </fieldset>
 			  <br/>

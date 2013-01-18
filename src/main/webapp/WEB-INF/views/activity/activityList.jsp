@@ -29,6 +29,8 @@
 			$('#deleteAct').removeAttr("disabled");
 		}else if(stateCompera(v,o,i) == '进行中'){
 			$('#deleteAct').attr("disabled","true"); 
+			$('#updateAct').removeAttr("disabled"); 
+			$('#cancerAct').removeAttr("disabled");
 		}
 	} 
 	
