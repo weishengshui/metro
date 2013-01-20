@@ -89,6 +89,7 @@ public class ArchiveController {
 	@RequestMapping(value = "/imageShow")
 	public void shopPicShow(String path, String fileName, String contentType,
 			HttpServletResponse response) throws Exception {
+		//contentType = "image/pjpeg";
 		contentType = contentType.toUpperCase();
 		System.out.println("==============sssssaaa=======>  "+contentType);
 		path = Dictionary.getPicPath(path);

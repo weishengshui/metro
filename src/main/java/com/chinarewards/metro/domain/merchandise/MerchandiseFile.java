@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -28,9 +29,9 @@ public class MerchandiseFile implements Serializable {
 	 */
 	private static final long serialVersionUID = 8147708279487398072L;
 
-	@Column(nullable = false)
+	@Column(updatable = false)
 	private Date createdAt;
-
+	@Column(updatable = false)
 	private Integer createdBy;
 
 	@Column(length = 4000)
@@ -52,10 +53,10 @@ public class MerchandiseFile implements Serializable {
 
 	@Column(nullable = false)
 	private Date lastModifiedAt;
-
+	@Column(nullable = false)
 	private Integer lastModifiedBy;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)//默认是FetchType.EAGER
 	private Merchandise merchandise;
 
 	private String mimeType;

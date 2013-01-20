@@ -16,7 +16,8 @@ public class MerchandiseCriteria {
 	private String name;
 	private String model;
 	private String unitId; // 根据unitId确定售卖形式
-	private String categoryId; //商品目录所属的类别id
+	private String categoryId; // 商品目录所属的类别id
+	private Integer brandId;
 
 	private Page paginationDetail;
 	private SortingDetail sortingDetail;
@@ -83,6 +84,14 @@ public class MerchandiseCriteria {
 
 	public void setCategoryId(String categoryId) {
 		this.categoryId = categoryId;
+	}
+
+	public Integer getBrandId() {
+		return brandId;
+	}
+
+	public void setBrandId(Integer brandId) {
+		this.brandId = brandId;
 	}
 
 }

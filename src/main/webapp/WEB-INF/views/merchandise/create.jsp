@@ -86,7 +86,6 @@
 		}
 		if($('#rmb').attr('checked')){
 			$('#rmbPrice').validatebox({required: true});
-			
 		}
 		if($('#rmbPreferential').attr('checked')){
 			$('#rmbPreferentialPrice').validatebox({required: true});
@@ -105,12 +104,6 @@
 	        }, 
 			success: function(result){
 				result = eval('('+result+')'); 
-				if(result.categoryId){
-					var node = $('#tt2').tree('find',eval('('+result+')').categoryId);
-					var fullParent = getFullCategory(node);
-					alert('\"'+fullParent+'\"类别中已存在该排序值');
-					return;
-				}
 				$('#_id').val(result.id);
 				alert(result.msg);
 			},
@@ -160,7 +153,7 @@
 				var deleteBut='<button type="button" onclick="deleteCategory(this)">删除</button>';
 				//var categoryTable = '';
 				var timeParam = Math.round(new Date().getTime()/1000);
-				$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto">商品类别</td><td width="auto">上下架</td><td width="auto">类别排序</td><td width="auto">上下架时间</td><td width="auto">操作</td></tr></table>');
+				$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto"  align="center">商品类别</td><td width="auto" align="center">上下架</td><td width="auto" align="center">类别排序</td><td width="auto" align="center">上下架时间</td><td width="auto" align="center">操作</td></tr></table>');
 				for(var i = 0; i < nodes.length; i++){
 					var displaySort = '<input name="displaySort" type="text" style="width:50px" ';
 					var node = nodes[i];
@@ -171,7 +164,7 @@
 					displaySort += ' id="' + displaySortId +'"/>';
 					
 					var str = '<tr>';
-					str += '<td  width="auto">' + categId +category +'</td><td  width="auto">'+status +'</td><td  width="auto">' + displaySort +'</td><td width="auto"><input type=text readonly="readonly" value=\"'+getCurrentTime()+'\" /></td><td width="auto">'+deleteBut+'</td>';
+					str += '<td  width="auto">' + categId +category +'</td><td  width="auto">'+status +'</td><td  width="auto">' + displaySort +'</td><td width="auto"><input type=text name=on_offTime readonly="readonly" value=\"'+getCurrentTime()+'\" /></td><td width="auto">'+deleteBut+'</td>';
 					str += '</tr>';
 					$(str).appendTo($('#categoryTable'));
 					$('#' + displaySortId).numberbox({precision:0});

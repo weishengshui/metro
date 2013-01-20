@@ -7,11 +7,11 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.chinarewards.metro.core.common.Constants;
 import com.chinarewards.metro.core.common.HBDaoSupport;
 import com.chinarewards.metro.core.common.SystemTimeProvider;
 import com.chinarewards.metro.core.common.UserContext;
 import com.chinarewards.metro.domain.category.Category;
-import com.chinarewards.metro.domain.category.CategoryConstants;
 import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 
 @Service
@@ -121,13 +121,13 @@ public class CategoryService implements ICategoryService {
 		if (null == id || id.isEmpty()) {
 			List<Category> list = hbDaoSupport.findTsByHQL(
 					"SELECT m FROM Category m WHERE m.id = ?",
-					CategoryConstants.MERCHANDISE_CATEGORY_ROOT_ID);
+					Constants.CATEGORY_ROOT_ID);
 			if (null != list && list.size() == 0) {
 				Category category = new Category();
 				category.setCreatedAt(SystemTimeProvider.getCurrentTime());
 				category.setCreatedBy(UserContext.getUserId());
 				category.setDescription("商品类别根节点");
-				category.setId(CategoryConstants.MERCHANDISE_CATEGORY_ROOT_ID);
+				category.setId(Constants.MERCHANDISE_CATEGORY_ROOT);
 				category.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
 				category.setLastModifiedBy(UserContext.getUserId());
 				category.setLft(1);
@@ -136,13 +136,13 @@ public class CategoryService implements ICategoryService {
 				hbDaoSupport.save(category);
 				Map<String, Object> map = new HashMap<String, Object>();
 				map.put("rootId",
-						CategoryConstants.MERCHANDISE_CATEGORY_ROOT_ID);
+						Constants.CATEGORY_ROOT_ID);
 				map.put("id", category.getId());
 				hbDaoSupport.executeHQL(
 						"UPDATE Category SET id=:rootId WHERE id=:id", map);
 				list = hbDaoSupport.findTsByHQL(
 						"SELECT m FROM Category m WHERE m.id = ?",
-						CategoryConstants.MERCHANDISE_CATEGORY_ROOT_ID);
+						Constants.CATEGORY_ROOT_ID);
 			}
 			return list;
 		} else {
@@ -232,6 +232,12 @@ public class CategoryService implements ICategoryService {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public Category findCategoryById(String id) {
+
+		return hbDaoSupport.findTById(Category.class, id);
 	}
 
 }

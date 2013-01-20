@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ import com.chinarewards.metro.core.common.Page;
 import com.chinarewards.metro.core.common.SystemTimeProvider;
 import com.chinarewards.metro.core.common.UUIDUtil;
 import com.chinarewards.metro.core.common.UserContext;
-import com.chinarewards.metro.core.service.IFileItemService;
+import com.chinarewards.metro.domain.category.Category;
 import com.chinarewards.metro.domain.merchandise.Merchandise;
 import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
@@ -48,9 +49,11 @@ import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
 import com.chinarewards.metro.model.common.AjaxResponseCommonVo;
 import com.chinarewards.metro.model.common.ImageInfo;
 import com.chinarewards.metro.model.merchandise.CategoryVo;
+import com.chinarewards.metro.model.merchandise.MerchandiseCatalogVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
 import com.chinarewards.metro.model.merchandise.MerchandiseVo;
 import com.chinarewards.metro.model.merchandise.SaleFormVo;
+import com.chinarewards.metro.service.category.ICategoryService;
 import com.chinarewards.metro.service.merchandise.IMerchandiseService;
 import com.chinarewards.metro.validator.merchandise.CreateMerchandiseValidator;
 
@@ -63,8 +66,7 @@ public class MerchandiseControler {
 	@Autowired
 	private IMerchandiseService merchandiseService;
 	@Autowired
-	IFileItemService fileItemService;
-
+	private ICategoryService categoryService;
 	/**
 	 * 商品维护
 	 * 
@@ -77,24 +79,24 @@ public class MerchandiseControler {
 			String id) {
 
 		// prepare data
-		Merchandise merchandise = merchandiseService
-				.findMerchandiseId(id);
-		
-		Set<MerchandiseSaleform> saleforms = merchandise.getMerchandiseSaleforms();
+		Merchandise merchandise = merchandiseService.findMerchandiseId(id);
+		Set<MerchandiseSaleform> saleforms = merchandise
+				.getMerchandiseSaleforms();
 		List<CategoryVo> categoryVos = merchandiseService
 				.findCategorysByMerchandise(merchandise);
-
+		Date date = new Date();
+		date.getTime();
 		String imageSessionName = UUIDUtil.generate();
 		Map<String, MerchandiseFile> images = merchandiseService
-				.findMerchandiseFIlesByMerchandise(merchandise);
+				.findMerchandiseFilesByMerchandise(merchandise);
 		System.out.println("merchandise images size is " + images.size());
-		
+
 		session.setAttribute(imageSessionName, images);
 		model.addAttribute("images", CommonUtil.toJson(images));
 		model.addAttribute("imageSessionName", imageSessionName);
 
 		model.addAttribute("merchandise", merchandise);
-		model.addAttribute("saleforms", saleforms);
+		model.addAttribute("saleforms", CommonUtil.toJson(saleforms));
 		model.addAttribute("categoryVos", CommonUtil.toJson(categoryVos));
 
 		return "merchandise/show";
@@ -148,8 +150,8 @@ public class MerchandiseControler {
 			Double binkePrice, Boolean rmb, Boolean binke,
 			Boolean rmbPreferential, Boolean binkePreferential,
 			Double rmbPreferentialPrice, Double binkePreferentialPrice,
-			String[] categId, String[] status, Long[] displaySort)
-			throws IOException {
+			String[] categId, String[] status, Long[] displaySort,
+			Date[] on_offTime) throws IOException {
 
 		PrintWriter out = null;
 		try {
@@ -157,9 +159,6 @@ public class MerchandiseControler {
 			out = response.getWriter();
 
 			System.out.println("enter CreateOrUpdateMerchandise()");
-			if (null == merchandise) {
-				merchandise = new Merchandise();
-			}
 
 			List<MerchandiseFile> files = new ArrayList<MerchandiseFile>();
 			Map<String, MerchandiseFile> images = (Map<String, MerchandiseFile>) session
@@ -177,16 +176,16 @@ public class MerchandiseControler {
 					files.add(image);
 				}
 			}
-			
+
 			// merchandise category
 			List<CategoryVo> categoryVos = new ArrayList<CategoryVo>();
 			if (null != categId) {
 				for (int i = 0, length = categId.length; i < length; i++) {
 					System.out.println("categId [] is " + categId[i]);
-					categoryVos.add(new CategoryVo(categId[i],
-							MerchandiseStatus.fromString(status[i]),
-							SystemTimeProvider.getCurrentTime(),
-							displaySort[i], merchandise.getId()));
+					categoryVos
+							.add(new CategoryVo(categId[i], MerchandiseStatus
+									.fromString(status[i]), on_offTime[i],
+									displaySort[i], merchandise.getId()));
 				}
 			}
 			System.out.println("categoryVos is " + categoryVos.toString());
@@ -218,86 +217,45 @@ public class MerchandiseControler {
 						.getAllErrors().get(0).getDefaultMessage())));
 				out.flush();
 				return;
-			} else {
-				System.out.println("merchandise.getId() is "
-						+ merchandise.getId());
-				if (merchandiseService.checkCodeExists(merchandise)) {
-					out.println(CommonUtil.toJson(new AjaxResponseCommonVo(
-							"商品编号\"" + merchandise.getCode() + "\"已存在")));
-					out.flush();
-					return;
-				}
-				if (merchandiseService.checkModelExists(merchandise)) {
-					out.println(CommonUtil.toJson(new AjaxResponseCommonVo(
-							"商品型号\"" + merchandise.getModel() + "\"已存在")));
-					out.flush();
-					return;
-				}
-				if (null != categoryVos && categoryVos.size() > 0) { // 检查类别排序在指定的类别中是否已经存在
-					for (CategoryVo categoryVo2 : categoryVos) {
-						if (merchandiseService
-								.checkDisplaySortExists(categoryVo2)) {
-							AjaxResponseCommonVo ajaxResponseCommonVo = new AjaxResponseCommonVo();
-							ajaxResponseCommonVo.setCategoryId(categoryVo2
-									.getCategoryId());
-							out.println(CommonUtil.toJson(ajaxResponseCommonVo));
-							out.flush();
-							return;
-						}
-					}
-				}
-				if (null == merchandise.getId()
-						|| merchandise.getId().isEmpty()) { // insert
+			}
 
-					merchandiseService.createMerchandise(merchandise, files,
-							saleFormVos, categoryVos);
-					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo(
-							"保存成功");
-					commonVo.setId(merchandise.getId());
-					out.println(CommonUtil.toJson(commonVo));
-					out.flush();
-					return;
-				} else {// update
-					// 判断兑换形式是否有效，比如去掉一中兑换形式，而该形式已在某商品类别下，此时这种兑换形式就不能去掉
-					List<MerchandiseSaleform> saleForms = merchandiseService
-							.findSaleFormsByMerchandise(merchandise);
-					if (null != saleForms && saleForms.size() > 0) {
-						for (MerchandiseSaleform saleform : saleForms) {
-							boolean exists = false;
-							for (SaleFormVo saleFormVo : saleFormVos) {
-								if (saleFormVo.getUnitId().equals(
-										saleform.getUnitId())) {
-									exists = true;
-									break;
-								}
-							}
-							if (!exists) { // 不存在就删除这一兑换形式的商品
-								if (!merchandiseService
-										.deleteSaleForm(saleform)) {
-									if (saleform.getUnitId().equals("0")) {
-										out.println(CommonUtil
-												.toJson(new AjaxResponseCommonVo(
-														"\"正常售卖\"已经与商品类别相关联，不能去掉")));
-									} else {
-										out.println(CommonUtil
-												.toJson(new AjaxResponseCommonVo(
-														"\"积分兑换\"已经与商品类别相关联，不能去掉")));
-									}
-									out.flush();
-									return;
-								}
-							}
-						}
+			System.out.println("merchandise.getId() is " + merchandise.getId());
+			if (merchandiseService.checkCodeExists(merchandise)) {
+				out.println(CommonUtil.toJson(new AjaxResponseCommonVo("商品编号\""
+						+ merchandise.getCode() + "\"已存在")));
+				out.flush();
+				return;
+			}
+			if (merchandiseService.checkModelExists(merchandise)) {
+				out.println(CommonUtil.toJson(new AjaxResponseCommonVo("商品型号\""
+						+ merchandise.getModel() + "\"已存在")));
+				out.flush();
+				return;
+			}
+			if (null != categoryVos && categoryVos.size() > 0) { // 检查类别排序在指定的类别中是否已经存在
+				for (CategoryVo categoryVo2 : categoryVos) {
+					if (merchandiseService.checkDisplaySortExists(categoryVo2)) {
+						Category category = categoryService.findCategoryById(categoryVo2.getCategoryId());
+						String categoryFullName = merchandiseService.getCategoryFullName(category);
+						out.println(CommonUtil.toJson(new AjaxResponseCommonVo("\""+categoryFullName+"\"类别中已存在该排序值")));
+						out.flush();
+						return;
 					}
-					merchandiseService.updateMerchandise(merchandise, files,
-							saleFormVos, categoryVos);
-					AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo(
-							"保存成功");
-					commonVo.setId(merchandise.getId());
-					out.println(CommonUtil.toJson(commonVo));
-					out.flush();
 				}
 			}
+			if (null == merchandise.getId() || merchandise.getId().isEmpty()) { // insert
+
+				merchandiseService.createMerchandise(merchandise, files,
+						saleFormVos, categoryVos);
+			} else {// update
+
+				merchandiseService.updateMerchandise(merchandise, files,
+						saleFormVos, categoryVos);
+			}
+			AjaxResponseCommonVo commonVo = new AjaxResponseCommonVo("保存成功");
+			commonVo.setId(merchandise.getId());
+			out.println(CommonUtil.toJson(commonVo));
+			out.flush();
 		} catch (FileNotFoundException fileNotFoundException) {
 			fileNotFoundException.printStackTrace();
 			out.println(CommonUtil.toJson(new AjaxResponseCommonVo("错误："
@@ -411,7 +369,7 @@ public class MerchandiseControler {
 
 		criteria.setPaginationDetail(paginationDetail);
 
-		List<MerchandiseCatalog> catalogs = merchandiseService
+		List<MerchandiseCatalogVo> catalogs = merchandiseService
 				.searchMerCatas(criteria);
 		Long count = merchandiseService.countMerCatas(criteria);
 
@@ -488,11 +446,19 @@ public class MerchandiseControler {
 		response.setContentType("text/html; charset=utf-8");
 		PrintWriter out = response.getWriter();
 
-		MerchandiseCatalog catalog = new MerchandiseCatalog();
-		catalog.setId(catalogId);
+		MerchandiseCatalog catalog = merchandiseService.findMerchandiseCatalogById(catalogId);
 		catalog.setStatus(MerchandiseStatus.fromString(status));
 		catalog.setDisplaySort(displaySort);
 		System.out.println("catalog.getId() is " + catalog.getId());
+		if(merchandiseService.checkDisplaySortExists(new CategoryVo(catalog))){
+			AjaxResponseCommonVo ajaxResponseCommonVo = new AjaxResponseCommonVo();
+			ajaxResponseCommonVo.setCategoryId(catalog.getCategory().getId());
+			String categoryFullName = merchandiseService.getCategoryFullName(catalog.getCategory());
+			ajaxResponseCommonVo.setMsg("\""+categoryFullName+"\"类别中已存在该排序值");
+			out.println(CommonUtil.toJson(ajaxResponseCommonVo));
+			out.flush();
+			return;
+		}
 		merchandiseService.updateCatalog(catalog);
 
 		out.println(CommonUtil.toJson(new AjaxResponseCommonVo("修改成功")));
@@ -507,38 +473,41 @@ public class MerchandiseControler {
 	 */
 	@RequestMapping("/removeCataFromCategory")
 	@ResponseBody
-	public AjaxResponseCommonVo removeCataFromCategory(String[] id) {
-
+	public void removeCataFromCategory(HttpServletResponse response, String[] id) throws IOException{
+		
 		merchandiseService.removeCataFromCategory(id);
-		return new AjaxResponseCommonVo("删除成功");
+
+		response.setContentType("text/html; charset=utf-8");
+		PrintWriter out = response.getWriter();
+		out.write(CommonUtil.toJson(new AjaxResponseCommonVo("删除成功")));
 	}
 
-//	/**
-//	 * 批量删除商品的某一兑换类型
-//	 * 
-//	 * @param id
-//	 * @param model
-//	 * @return
-//	 */
-//	@RequestMapping(value = "/delete")
-//	@ResponseBody
-//	public AjaxResponseCommonVo delete(String[] id, Model model) {
-//		System.out.println(id);
-//		if (null != id && id.length > 0) {
-//			for (String cataId : id) {
-//				String code = merchandiseService
-//						.checkMerchCataHasCategory(cataId);
-//				if (null != code) {
-//					return new AjaxResponseCommonVo("编号为\"" + code
-//							+ "\"的商品已经与商品类别关联，不能删除");
-//				}
-//			}
-//			merchandiseService.batchDelete(id);
-//			return new AjaxResponseCommonVo("删除成功");
-//		} else {
-//			return new AjaxResponseCommonVo("请先选择要删除的行");
-//		}
-//	}
+	/**
+	 * 批量删除商品
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/delete")
+	@ResponseBody
+	public AjaxResponseCommonVo delete(String[] id, Model model) {
+		System.out.println(id);
+		if (null != id && id.length > 0) {
+			for (String merchandiseId : id) {
+				Merchandise merchandise = merchandiseService
+						.checkMerchandiseCanDelete(merchandiseId);
+				if(null != merchandise){
+					return new AjaxResponseCommonVo("编号为\"" + merchandise.getCode()
+							+ "\"的商品已经与商品类别关联，不能删除");
+				}
+			}
+			merchandiseService.batchDelete(id);
+			return new AjaxResponseCommonVo("删除成功");
+		} else {
+			return new AjaxResponseCommonVo("请先选择要删除的行");
+		}
+	}
 
 	/**
 	 * 判断指定商品是否在该类别下
@@ -593,7 +562,7 @@ public class MerchandiseControler {
 								sort[i]));
 					}
 				}
-				merchandiseService.addMerchandise(categoryVos, cateId);
+				merchandiseService.addMerchandiseToCategory(categoryVos, cateId);
 				out.println(CommonUtil.toJson(new AjaxResponseCommonVo("添加成功")));
 				out.flush();
 				return;

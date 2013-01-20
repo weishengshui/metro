@@ -9,6 +9,7 @@ import com.chinarewards.metro.domain.merchandise.MerchandiseCatalog;
 import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
 import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
 import com.chinarewards.metro.model.merchandise.CategoryVo;
+import com.chinarewards.metro.model.merchandise.MerchandiseCatalogVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
 import com.chinarewards.metro.model.merchandise.MerchandiseVo;
 import com.chinarewards.metro.model.merchandise.SaleFormVo;
@@ -144,7 +145,7 @@ public interface IMerchandiseService {
 	 * @param criteria
 	 * @return
 	 */
-	List<MerchandiseCatalog> searchMerCatas(MerchandiseCriteria criteria);
+	List<MerchandiseCatalogVo> searchMerCatas(MerchandiseCriteria criteria);
 	
 	/**
 	 * 查询指定类别的商品目录总数
@@ -214,7 +215,7 @@ public interface IMerchandiseService {
 	 * @param categoryVos
 	 * @param cateId
 	 */
-	void addMerchandise(List<CategoryVo> categoryVos, String cateId);
+	void addMerchandiseToCategory(List<CategoryVo> categoryVos, String cateId);
 	
 	/**
 	 * 获取某一商品的所有兑换形式
@@ -253,7 +254,7 @@ public interface IMerchandiseService {
 	 * @param merchandise
 	 * @return
 	 */
-	Map<String, MerchandiseFile> findMerchandiseFIlesByMerchandise(
+	Map<String, MerchandiseFile> findMerchandiseFilesByMerchandise(
 			Merchandise merchandise);
 	
 	/**
@@ -279,4 +280,27 @@ public interface IMerchandiseService {
 	 */
 	Merchandise findMerchandiseId(String id);
 	
+	/**
+	 * 检查商品是否可以删除，可以删除就返回Merchandise实体，反之返回null
+	 * 
+	 * @param merchandiseId
+	 * @return
+	 */
+	Merchandise checkMerchandiseCanDelete(String merchandiseId);
+	
+	/**
+	 * 获取商品类别全名，类别名之间用"/"分开
+	 * 
+	 * @param category
+	 * @return
+	 */
+	public String getCategoryFullName(Category category);
+	
+	/**
+	 * 根据id查询商品目录
+	 * 
+	 * @param id
+	 * @return
+	 */
+	MerchandiseCatalog findMerchandiseCatalogById(String id);
 }

@@ -16,6 +16,7 @@
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery/locale/easyui-lang-zh_CN.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/common.js"></script>
 <script type="text/javascript" src="<%=request.getContextPath()%>/js/map.js"></script>
+<script type="text/javascript" src="<%=request.getContextPath()%>/js/jquery.json-2.4.js"></script>
 	<script type="text/javascript">
 	var baseURL = '<%=request.getContextPath()%>';
 	
@@ -35,20 +36,28 @@
 	
 	
 	$(function(){
+		
 		style="display:none";
     	document.getElementById('divPreview').style.display = "none";
-		var pictureName = '${activity.picture }';
-		var typePic = pictureName.substring(pictureName.lastIndexOf(".")+1, pictureName.length);
-		if(pictureName && pictureName!=""){
-			var width = 300,height =300;
-			//$('#'+preArray[0]).val(i);
-			$('#aimage1').attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=ACTIVITY_IMAGE_DIR&contentType='+typePic+'&fileName='+pictureName+'\',\''+width+'\',\''+height+'\')');
-			$('#image1').attr('src',baseURL+'/archive/showGetthumbPic?path=ACTIVITY_IMAGE_DIR&contentType='+typePic+'&fileName='+pictureName+'');
-			style="display:none";
-	    	document.getElementById('divPreview').style.display = "";
-		}else{
-			style="display:none";
-	    	document.getElementById('divPreview').style.display = "none";
+
+    	var images = $.toJSON(${images});
+		images = eval('('+images+')');
+		if(images){
+			for(var i in images){
+				var image = images[i];
+				if(image){
+					$('#key').val(i);
+					$('#aimage1').attr('href','javascript:show(\''+baseURL+'/archive/imageShow?path=ACTIVITY_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url+'\',\''+image.width+'\',\''+image.height+'\')');
+					$('#image1').attr('src',baseURL+'/archive/showGetthumbPic?path=ACTIVITY_IMAGE_DIR&contentType='+image.mimeType+'&fileName='+image.url);
+					style="display:none";
+			    	document.getElementById('divPreview').style.display = "";
+			    	break;
+				}else{
+					style="display:none";
+			    	document.getElementById('divPreview').style.display = "none";
+					break;
+				}
+			}
 		}
 	}
 );

@@ -65,8 +65,6 @@ select {
 		        		$('#tt').tree('expandTo', node.target);
 		        	}
 		        	alert(eval('(' + result + ')').msg);
-		        	
-		            		        	
 		        }  
 		    });	
 	}
@@ -119,7 +117,7 @@ select {
 							<td width="80px">排序编号：</td>
 							<td width="200px" align="left">
 								<input id="displaySort" type='text' name='displaySort' style="width:150px"  
-												class="easyui-numberbox" data-options="required:true" maxlength="20"/>
+												class="easyui-numberbox" data-options="required:true" maxlength="10"/>
 							</td>
 						</tr>
 						<tr>

@@ -317,8 +317,13 @@ public class ActivityControl {
 			String imageSessionName = UUIDUtil.generate();
 			model.addAttribute("imageSessionName", imageSessionName);
 			if (id != null) {
+				ActivityInfo activity = activityService.findActivityById(id);
+				Map<String, com.chinarewards.metro.domain.file.FileItem> images = new HashMap<String, com.chinarewards.metro.domain.file.FileItem>();
+				images.put("A"+UUIDUtil.generate(), activity.getImage());
+				session.setAttribute(imageSessionName, images);
+				model.addAttribute("images", CommonUtil.toJson(images));
 				model.addAttribute("activity",
-						activityService.findActivityById(id));
+						activity);
 				model.addAttribute("discount",
 						activityService.findDiscountNumberById(id));
 			}
@@ -355,7 +360,8 @@ public class ActivityControl {
 			actImage.setUrl(FileUtil.moveFile(Constants.ACTIVITY_IMAGE_BUFFER,
 					actImage.getUrl(), Constants.ACTIVITY_IMAGE_DIR));
 		}
-		activity.setPicture(actImage.getUrl());
+		activity.setImage(actImage);
+//		activity.setPicture(actImage.getUrl());
 		activityService.updateActivity(activity);
 
 		String title = request.getParameter("title");
@@ -424,7 +430,8 @@ public class ActivityControl {
 						Constants.ACTIVITY_IMAGE_BUFFER, actImage.getUrl(),
 						Constants.ACTIVITY_IMAGE_DIR));
 			}
-			activity.setPicture(actImage.getUrl());
+			activity.setImage(actImage);
+//			activity.setPicture(actImage.getUrl());
 			activity.setTag(1);
 			activityService.saveActivity(activity);
 

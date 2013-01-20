@@ -55,8 +55,8 @@ INSERT INTO `Resources` VALUES ('14', '门店新增', null, '13', 'line/shopPage
 INSERT INTO `Resources` VALUES ('15', '门店维护', null, '13', null);
 INSERT INTO `Resources` VALUES ('16', '门店关系维护', null, '13', null);
 INSERT INTO `Resources` VALUES ('17', '活动管理', null, '0', null);
-INSERT INTO `Resources` VALUES ('18', '活动新增', null, '17', null);
-INSERT INTO `Resources` VALUES ('19', '活动维护', null, '17', null);
+INSERT INTO `Resources` VALUES ('18', '活动新增', null, '17', 'activity/addActivity');
+INSERT INTO `Resources` VALUES ('19', '活动维护', null, '17', 'activity/activityList');
 INSERT INTO `Resources` VALUES ('20', '商品管理', null, '0', null);
 INSERT INTO `Resources` VALUES ('21', '商品类别新增', null, '20', 'category/add');
 INSERT INTO `Resources` VALUES ('22', '商品类型维护', null, '20', 'category/maintain');

@@ -89,6 +89,7 @@
 				$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
 				style="display:none";
 		    	document.getElementById(divPreviewId).style.display = "";
+		    	$('#addImage').dialog('close');
 			}
 		}); 
 	}

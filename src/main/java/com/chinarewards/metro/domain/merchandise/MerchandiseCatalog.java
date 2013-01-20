@@ -1,5 +1,6 @@
 package com.chinarewards.metro.domain.merchandise;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -22,7 +23,12 @@ import com.chinarewards.metro.domain.category.Category;
  * 
  */
 @Entity
-public class MerchandiseCatalog {
+public class MerchandiseCatalog implements Serializable{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3335728039915055972L;
 
 	@Id
 	@GeneratedValue(generator = "system-uuid")
@@ -65,7 +71,7 @@ public class MerchandiseCatalog {
 		this.id = id;
 	}
 	
-	@JsonBackReference("Merchandise-MerchandiseCatalog")
+	@JsonBackReference
 	public Merchandise getMerchandise() {
 		return merchandise;
 	}

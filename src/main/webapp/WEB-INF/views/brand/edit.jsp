@@ -105,6 +105,7 @@
 				$('#'+imageId).attr('src',baseURL+'/archive/showGetthumbPic?path=BRAND_IMAGE_BUFFER&contentType='+result.contentType+'&fileName='+result.url);
 				style="display:none";
 		    	document.getElementById(divPreviewId).style.display = "";
+		    	$('#addImage').dialog('close');
 			}
 		}); 
 	}
@@ -142,6 +143,15 @@
 	
 	function deleteInputFile(name, id, spanId){
 		$('#'+spanId).html("<input type=file name="+ name +" id="+ id +" accept=image/* onchange=check(this,'"+spanId+"') />");
+	}
+	function doSearchMerchandise(){
+			
+	    $('#tt3').datagrid('load',{  
+	    	name:$('#merName').val(),  
+	    	code:$('#merCode').val(),
+	    	model:$('#merModel').val(),
+	    	brandId:$('#brandId').val()
+	    });  
 	}
 </script>
 
@@ -339,6 +349,65 @@
 					   			<br>
 					   			<input type="button" onclick="exportUnionMember()" value="导出EXCEL">
 					   		</div>
+						</fieldset>
+					</td>
+				</tr>
+			</table>
+       </div>
+       <div title="商品" style="padding:20px;">
+			<table border="0">
+				<tr>
+					<td>
+						<fieldset style="font-size: 14px;width:auto;height:auto;">
+						<legend style="color: blue;">查询条件</legend>
+						<form action="#" >
+							<table border="0">
+								<tr>
+									<td width="80px">商品编号：</td>
+									<td width="200px" align="left">
+										<input type="hidden" name="brandId" id="brandId" value="${brand.id }" />
+										<input id="merCode" name="code" type="text" style="width:150px"/> 
+									</td>
+									<td width="80px">商品名称：</td>
+									<td width="200px" align="left">
+										<input id="merName" name="name" type="text" style="width:150px"> 
+									</td>
+								</tr>
+								<tr>
+									<td width="80px">商品型号：</td>
+									<td width="200px" align="left">
+										<input id="merModel" name="model" type="text" style="width:150px"/> 
+									</td>
+									<td width="80px" align="right">
+										<button type="button" onclick="doSearchMerchandise()">查询</button>
+									</td>
+									<td width="200px" align="left">
+										<button type="reset">重置</button>
+									</td>
+								</tr>
+							</table>
+						</form>
+					</fieldset>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<fieldset style="font-size: 14px;width:auto;height:auto;">
+							<legend style="color: blue;">查询结果</legend>
+							<table id="tt3" class="easyui-datagrid" width="100%" height="100%"   
+								data-options="url:'<%=request.getContextPath()%>/merchandise/list',rownumbers:true,pagination:true,queryParams:{
+								brandId:${brand.id }
+								}"
+		           				>  
+		       					<thead>  
+			           				<tr>  
+				           				<th field="id" checkbox="true"></th> 
+				                		<th data-options="field:'code',width:100">商品编号</th>
+				                		<th data-options="field:'name',width:100">商品名称</th>
+				                		<th data-options="field:'model',width:100">商品型号</th>
+						           	</tr>  
+						       	</thead>  
+					   		</table> 
 						</fieldset>
 					</td>
 				</tr>

@@ -1,12 +1,15 @@
 package com.chinarewards.metro.service.merchandise;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.chinarewards.metro.core.common.Constants;
 import com.chinarewards.metro.core.common.HBDaoSupport;
 import com.chinarewards.metro.core.common.SystemTimeProvider;
 import com.chinarewards.metro.core.common.UUIDUtil;
@@ -18,6 +21,7 @@ import com.chinarewards.metro.domain.merchandise.MerchandiseFile;
 import com.chinarewards.metro.domain.merchandise.MerchandiseSaleform;
 import com.chinarewards.metro.domain.merchandise.MerchandiseStatus;
 import com.chinarewards.metro.model.merchandise.CategoryVo;
+import com.chinarewards.metro.model.merchandise.MerchandiseCatalogVo;
 import com.chinarewards.metro.model.merchandise.MerchandiseCriteria;
 import com.chinarewards.metro.model.merchandise.MerchandiseVo;
 import com.chinarewards.metro.model.merchandise.SaleFormVo;
@@ -90,10 +94,12 @@ public class MerchandiseService implements IMerchandiseService {
 		merchandise.setLastModifiedBy(UserContext.getUserId());
 		hbDaoSupport.save(merchandise);
 
-		// sale merchandise files
+		// save merchandise files
 		if (null != files && files.size() > 0) {
 			for (MerchandiseFile file : files) {
 				file.setMerchandise(merchandise);
+				file.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+				file.setLastModifiedBy(UserContext.getUserId());
 				hbDaoSupport.save(file);
 			}
 		}
@@ -186,7 +192,7 @@ public class MerchandiseService implements IMerchandiseService {
 		if (null == catalog) {
 			return false;
 		}
-		if (catalog.getMerchandise().getId().equals(merchandiseId)) {
+		if (catalog.getMerchandise().getId().equals(merchandiseId) || catalog.getId().equals(categoryVo.getCatalogId())) {
 			return false;
 		}
 		return true;
@@ -201,15 +207,16 @@ public class MerchandiseService implements IMerchandiseService {
 		String name = merchandiseCriteria.getName();
 		String code = merchandiseCriteria.getCode();
 		String model = merchandiseCriteria.getModel();
+		Integer brandId = merchandiseCriteria.getBrandId();
 
 		if (isCount) {
 			strBuffer.append("SELECT COUNT(m) ");
 		} else {
 			strBuffer
-			.append("SELECT new com.chinarewards.metro.model.merchandise.MerchandiseVo(m) ");
+					.append("SELECT new com.chinarewards.metro.model.merchandise.MerchandiseVo(m) ");
 		}
-		
-		if(null == unitId || unitId.isEmpty()){//查询所有售卖形式
+
+		if (null == unitId || unitId.isEmpty()) {// 查询所有售卖形式
 
 			strBuffer.append("FROM Merchandise m WHERE 1=1  "); // 很奇妙
 
@@ -225,10 +232,15 @@ public class MerchandiseService implements IMerchandiseService {
 				strBuffer.append(" AND m.model like :model");
 				params.put("model", model + "%");
 			}
+			if(null != brandId){
+				strBuffer.append(" AND m.brand.id=:brandId");
+				params.put("brandId", brandId);
+			}
 			// TODO
-		}else{
-			
-			strBuffer.append("FROM MerchandiseSaleform m INNER JOIN m.merchandise mer WHERE 1=1  "); // 很奇妙
+		} else {
+
+			strBuffer
+					.append("FROM MerchandiseSaleform m INNER JOIN m.merchandise mer WHERE 1=1  "); // 很奇妙
 
 			if (null != name && !name.isEmpty()) {
 				strBuffer.append(" AND mer.name like :name");
@@ -241,6 +253,10 @@ public class MerchandiseService implements IMerchandiseService {
 			if (null != model && !model.isEmpty()) {
 				strBuffer.append(" AND mer.model like :model");
 				params.put("model", model + "%");
+			}
+			if(null != brandId){
+				strBuffer.append(" AND mer.brand.id=:brandId");
+				params.put("brandId", brandId);
 			}
 			strBuffer.append(" AND m.unitId=:unitId");
 			params.put("unitId", unitId);
@@ -324,16 +340,44 @@ public class MerchandiseService implements IMerchandiseService {
 		merchandiseFromDB.setFreight(merchandise.getFreight());
 		hbDaoSupport.update(merchandiseFromDB);
 
-		// delete old merchandise files
-		hbDaoSupport.executeHQL(
-				"DELETE MerchandiseFile m WHERE m.merchandise=?",
+		// update merchandise files
+		List<MerchandiseFile> mFiles = hbDaoSupport.findTsByHQL(
+				"FROM MerchandiseFile m WHERE m.merchandise=?",
 				merchandiseFromDB);
-
-		// save files
-		if (null != files && files.size() > 0) {
+		if (null == files || files.size() == 0) {
+			if (null != mFiles && mFiles.size() > 0) {
+				for (MerchandiseFile dFile : mFiles) {
+					(new File(Constants.MERCHANDISE_IMAGE_DIR, dFile.getUrl()))
+							.delete();// delete file from disk
+					hbDaoSupport.delete(dFile); // delete file from database
+				}
+			}
+		} else {
+			if (null != mFiles && mFiles.size() > 0) {
+				for (MerchandiseFile dFile : mFiles) {
+					boolean shouldDelete = true;
+					for (MerchandiseFile file : files) {
+						if (dFile.getId().equals(file.getId())) {
+							shouldDelete = false;
+							break;
+						}
+					}
+					if (shouldDelete) {
+						(new File(Constants.MERCHANDISE_IMAGE_DIR,
+								dFile.getUrl())).delete();// delete file from
+															// disk
+						hbDaoSupport.delete(dFile); // delete file from database
+					}
+				}
+			}
 			for (MerchandiseFile file : files) {
-				file.setMerchandise(merchandiseFromDB);
-				hbDaoSupport.save(file);
+				if (StringUtils.isEmpty(file.getId())) {
+					file.setMerchandise(merchandiseFromDB);
+					file.setLastModifiedAt(SystemTimeProvider.getCurrentTime());
+					file.setLastModifiedBy(UserContext.getUserId());
+					hbDaoSupport.save(file);
+				} else {
+				}
 			}
 		}
 
@@ -356,6 +400,26 @@ public class MerchandiseService implements IMerchandiseService {
 				saleform.setUnitId(saleFormVo.getUnitId());
 
 				hbDaoSupport.save(saleform);
+			}
+		}
+
+		if (null != categoryVos && categoryVos.size() > 0) { // update
+																// on_offTime
+			for (CategoryVo categoryVo : categoryVos) {
+				Category category = hbDaoSupport.findTById(Category.class,
+						categoryVo.getCategoryId());
+				MerchandiseCatalog catalog = hbDaoSupport
+						.findTByHQL(
+								"FROM MerchandiseCatalog WHERE category=? AND merchandise=?",
+								new Object[] { category, merchandiseFromDB });
+				/**
+				 * status changed, update on_offTime
+				 */
+				if (null != catalog
+						&& !catalog.getStatus().equals(categoryVo.getStatus())) {
+					categoryVo.setOn_offTime(SystemTimeProvider
+							.getCurrentTime());
+				}
 			}
 		}
 
@@ -389,11 +453,11 @@ public class MerchandiseService implements IMerchandiseService {
 	}
 
 	@Override
-	public List<MerchandiseCatalog> searchMerCatas(MerchandiseCriteria criteria) {
+	public List<MerchandiseCatalogVo> searchMerCatas(MerchandiseCriteria criteria) {
 
 		Map<String, Object> params = new HashMap<String, Object>();
 		String hql = buildSearchMerCatasHQL(criteria, params, false);
-		List<MerchandiseCatalog> list = hbDaoSupport.executeQuery(hql, params,
+		List<MerchandiseCatalogVo> list = hbDaoSupport.executeQuery(hql, params,
 				criteria.getPaginationDetail());
 		return list;
 
@@ -406,7 +470,7 @@ public class MerchandiseService implements IMerchandiseService {
 		String hql = buildSearchMerCatasHQL(criteria, params, true);
 
 		List<Long> list = hbDaoSupport.executeQuery(hql, params, null);
-		if (null != list && list.size() > 0) {
+		if (null != list && list.size() > 0 && list.get(0) > 0) {
 			return list.get(0);
 		}
 		return 0l;
@@ -429,7 +493,7 @@ public class MerchandiseService implements IMerchandiseService {
 		if (isCount) {
 			strBuffer.append("SELECT COUNT( m  ) ");
 		} else {
-			strBuffer.append("SELECT m ");
+			strBuffer.append("SELECT new com.chinarewards.metro.model.merchandise.MerchandiseCatalogVo(m) ");
 		}
 
 		strBuffer.append("FROM MerchandiseCatalog m WHERE 1=1 "); // 很奇妙
@@ -448,14 +512,13 @@ public class MerchandiseService implements IMerchandiseService {
 
 			if (null != name && !name.isEmpty()) {
 				strBuffer.append(" AND m.merchandise.name like :name");
-				params.put("name", "%" + name + "%");
+				params.put("name", name + "%");
 			}
 			if (null != code && !code.isEmpty()) {
 				strBuffer.append(" AND m.merchandise.code like :code");
-				params.put("code", "%" + code + "%");
+				params.put("code", code + "%");
 			}
 			// TODO
-			strBuffer.append(" GROUP BY m.merchandise ");
 			strBuffer.append(" ORDER BY m.displaySort ASC");
 		}
 		return strBuffer.toString();
@@ -589,13 +652,15 @@ public class MerchandiseService implements IMerchandiseService {
 	}
 
 	@Override
-	public void addMerchandise(List<CategoryVo> categoryVos, String cateId) {
+	public void addMerchandiseToCategory(List<CategoryVo> categoryVos, String cateId) {
 
 		Category category = hbDaoSupport.findTById(Category.class, cateId);
 		if (null != categoryVos && categoryVos.size() > 0 && null != category) {
 			for (CategoryVo categoryVo : categoryVos) {
-				Merchandise merchandise = hbDaoSupport.findTById(
-						Merchandise.class, categoryVo.getMerchandiseId());
+				Merchandise merchandise = hbDaoSupport.findTByHQL("FROM Merchandise WHERE code=?", categoryVo.getMerCode());
+					
+//					hbDaoSupport.findTById(
+//						Merchandise.class, categoryVo.getMerchandiseId());
 				if (null != merchandise) {
 					MerchandiseCatalog catalog = new MerchandiseCatalog();
 
@@ -659,8 +724,9 @@ public class MerchandiseService implements IMerchandiseService {
 		}
 		return list;
 	}
-
-	protected String getCategoryFullName(Category category) {
+	
+	@Override
+	public String getCategoryFullName(Category category) {
 		String fullName = "";
 		while (category.getParent() != null) {
 			fullName = category.getName() + "/" + fullName;
@@ -673,7 +739,7 @@ public class MerchandiseService implements IMerchandiseService {
 	}
 
 	@Override
-	public Map<String, MerchandiseFile> findMerchandiseFIlesByMerchandise(
+	public Map<String, MerchandiseFile> findMerchandiseFilesByMerchandise(
 			Merchandise merchandise) {
 
 		List<MerchandiseFile> list = hbDaoSupport.findTsByHQL(
@@ -712,5 +778,23 @@ public class MerchandiseService implements IMerchandiseService {
 	@Override
 	public Merchandise findMerchandiseId(String id) {
 		return hbDaoSupport.findTById(Merchandise.class, id);
+	}
+
+	@Override
+	public Merchandise checkMerchandiseCanDelete(String merchandiseId) {
+		
+		Merchandise merchandise = hbDaoSupport.findTById(Merchandise.class, merchandiseId);
+		MerchandiseCatalog catalog = hbDaoSupport.findTByHQL("FROM MerchandiseCatalog WHERE merchandise=?", merchandise);
+		if(null == catalog){
+			return null;
+		}else{
+			return merchandise;
+		}
+	}
+
+	@Override
+	public MerchandiseCatalog findMerchandiseCatalogById(String id) {
+		
+		return hbDaoSupport.findTById(MerchandiseCatalog.class, id);
 	}
 }

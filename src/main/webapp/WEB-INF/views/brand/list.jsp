@@ -21,10 +21,11 @@
 
 <script type="text/javascript">
 	
-	
 	function formatterdate(val, row) {
         var date = new Date(val);
-        return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+        var m = (date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1);
+        var d = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+        return date.getFullYear() + '-' + m + '-' + d;
 	}
 
 	function doSearch(){  
@@ -68,8 +69,7 @@
 		return '<a href="javascript:void(0)" onclick="edit(\''+r.id+'\',\''+r.name+'\')">修改</a>';
 	}
 	function edit(id,name){
-		//parent.addTab('修改'+name+'信息','brand/edit?id='+id);
-		parent.addTab('品牌修改','brand/edit?id='+id);
+		parent.addTab('维护'+name+'的信息','brand/edit?id='+id);
 	}
 </script>
 

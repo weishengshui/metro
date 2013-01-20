@@ -108,10 +108,32 @@
 	});
 	
 	$(document).ready(function(){
+		var saleforms = '${saleforms}';
+		saleforms = eval('('+saleforms+')');
+		if(saleforms && saleforms.length > 0){
+			for(var i = 0, length = saleforms.length; i < length; i++){
+				var saleform = saleforms[i];
+				if(saleform.unitId == "0"){
+					$('#rmb').attr('checked','checked');
+					$('#rmbPrice').numberbox('setValue',saleform.price);
+					if(saleform.preferentialPrice){
+						$('#rmbPreferential').attr('checked','checked');
+						$('#rmbPreferentialPrice').numberbox('setValue',saleform.preferentialPrice);
+					}
+				}else{
+					$('#binke').attr('checked','checked');
+					$('#binkePrice').numberbox('setValue',saleform.price);
+					if(saleform.preferentialPrice){
+						$('#binkePreferential').attr('checked','checked');
+						$('#binkePreferentialPrice').numberbox('setValue',saleform.preferentialPrice);
+					}
+				}
+			}
+		}
 		var categoryVos = '${categoryVos}';
 		categoryVos = eval('('+categoryVos+')');
 		var timeParam = Math.round(new Date().getTime()/1000);
-		$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto">商品类别</td><td width="auto">上下架</td><td width="auto">类别排序</td><td width="120px">上下架时间</td><td width="auto">操作</td></tr></table>');
+		$('#selectCategorys').html('<table border="0" id="categoryTable"><tr><td width="auto" align="center">商品类别</td><td width="auto" align="center">上下架</td><td width="auto" align="center">类别排序</td><td width="120px" align="center">上下架时间</td><td width="auto"  align="center">操作</td></tr></table>');
 		if(categoryVos && categoryVos.length > 0){
 			for(var i = 0, length = categoryVos.length; i < length; i++){
 				var displaySort = '<input name="displaySort" type="text" style="width:50px" ';
@@ -130,11 +152,11 @@
 					status='<select name="status" style="width:50px" ><option value="ON" selected="selected">上架</option><option value="OFF">下架</option></select>';
 				}else if(categoryVo.status == '<%=MerchandiseStatus.OFF.toString()%>'){
 					status='<select name="status" style="width:50px" ><option value="ON">上架</option><option value="OFF" selected="selected">下架</option></select>';
-				}on_offTime
+				}
 				
-				var on_offtime = '<input type=text readonly="readonly" value=\"'++'\" />;
+				var on_offtime = '<input type=text name=on_offTime readonly="readonly" value=\"'+ millisecToString(categoryVo.on_offTime) + '\" />';
 				var str = '<tr>';
-				str += '<td  width="auto">' + categId +categoryName +'</td><td  width="auto">'+status +'</td><td  width="auto">' + displaySort +'</td><td width="auto">'+deleteBut+'</td>';
+				str += '<td  width="auto">' + categId +categoryName +'</td><td  width="auto">'+status +'</td><td  width="auto">' + displaySort +'</td><td width="auto">' + on_offtime + '</td></td><td width="auto">'+deleteBut+'</td>';
 				str += '</tr>';
 				$(str).appendTo($('#categoryTable'));
 				$('#' + displaySortId).numberbox({precision:0});
@@ -143,6 +165,18 @@
 			}
 		}
 	});
+	
+	function millisecToString(millisec){ //根据1970 年 1 月 1 日之后millisec的毫秒数，返回"yyyy-MM-dd hh:mm:ss"
+		var someDate = new Date();
+		someDate.setTime(millisec);
+		var year = someDate.getFullYear();
+		var month = (someDate.getMonth() + 1) < 10 ? "0" + (someDate.getMonth() + 1) : (someDate.getMonth() + 1);
+		var date = someDate.getDate() < 10 ? "0" + someDate.getDate() : someDate.getDate();
+		var hour = someDate.getHours()< 10 ? "0" + someDate.getHours() : someDate.getHours();
+		var minute = someDate.getMinutes() < 10 ? "0" + someDate.getMinutes() : someDate.getMinutes();
+		var second = someDate.getSeconds() < 10 ? "0" + someDate.getSeconds() : someDate.getSeconds();
+		return year+"-"+month+"-"+date+" "+hour+":"+minute+":"+second;
+	}
 	
 	function doSubmit(){
 		$('#description2').val(editor.getContent());
@@ -172,12 +206,6 @@
 	            return $(this).form('validate');  
 	        }, 
 			success: function(result){
-				if(eval('('+result+')').categoryId){
-					var node = $('#tt2').tree('find',eval('('+result+')').categoryId);
-					var fullParent = getFullCategory(node);
-					alert(fullParent+'类别中已存在该排序值');
-					return;
-				}
 				alert(eval('('+result+')').msg);
 			},
 			error:function(result){
@@ -240,7 +268,7 @@
 					displaySort += ' id="' + displaySortId +'"/>';
 					
 					var str = '<tr>';
-					str += '<td  width="auto">' + categId +category +'</td><td  width="auto">'+status +'</td><td  width="auto">' + displaySort +'</td><td width="auto">'+deleteBut+'</td>';
+					str += '<td  width="auto">' + categId +category +'</td><td  width="auto">'+status +'</td><td  width="auto">' + displaySort +'</td><td width="auto"><input type=text name=on_offTime readonly="readonly" value=\"'+getCurrentTime()+'\" /></td><td width="auto">'+deleteBut+'</td>';
 					str += '</tr>';
 					$(str).appendTo($('#categoryTable'));
 					$('#' + displaySortId).numberbox({precision:0});
@@ -251,6 +279,16 @@
 			}
 			
 		}
+	}
+	function getCurrentTime(){
+		var currentTime = new Date();
+		var year = currentTime.getFullYear();
+		var month = currentTime.getMonth() + 1 < 10 ? "0" + (currentTime.getMonth() + 1) : currentTime.getMonth() + 1;
+		var date = currentTime.getDate() < 10 ? "0" + currentTime.getDate() : currentTime.getDate();
+		var hour = currentTime.getHours()<10?"0"+currentTime.getHours() : currentTime.getHours();
+		var minute = currentTime.getMinutes()<10? "0" +currentTime.getMinutes(): currentTime.getMinutes();
+		var second = currentTime.getSeconds() <10?"0"+currentTime.getSeconds():currentTime.getSeconds();
+		return year+"-"+month+"-"+date+" "+hour+":"+minute+":"+second;
 	}
 	function deleteCategory(butt, cateId){
 		map.remove(cateId);
@@ -425,192 +463,37 @@
 						</td>
 					</tr>
 					<tr>
-						<td>
-							<fieldset style="font-size: 14px;width:1100px;;height:auto;">
+						<td width="1200px">
+							<fieldset style="font-size: 14px;width:1100px;height:auto;">
 								<legend style="color: blue;">售卖形式</legend>
-								<c:choose>
-									<c:when test="${(!empty saleforms) && (fn:length(saleforms) > 0)}">
-										<table border="0">
-											<c:if test="${fn:length(saleforms) == 2 }">
-												<c:forEach items="${saleforms }" var="saleform">
-													<c:choose>
-														<c:when test="${saleform.unitId =='0' }">
-															<tr>
-																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" /></td>
-																<td width="80px">正常售卖：</td>
-																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-																</td>
-																<c:choose>
-																	<c:when test="${ ! empty saleform.preferentialPrice }">
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" checked="checked" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
-																		<td width="120px">优惠价格：</td>
-																		<td width="200px">
-																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
-																		</td>																	
-																	</c:when>
-																	<c:otherwise>
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
-																		<td width="120px">优惠价格：</td>
-																		<td width="200px">
-																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
-																		</td>
-																	</c:otherwise>
-																</c:choose>
-															</tr>
-														</c:when>
-														<c:otherwise>
-															<tr>
-																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked"/></td>
-																<td width="80px">积分兑换：</td>
-																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2"  maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-																</td>
-																<c:choose>
-																	<c:when test="${ ! empty saleform.preferentialPrice }">
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" checked="checked" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
-																		<td width="120px">优惠兑换积分：</td>
-																		<td width="200px">
-																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
-																		</td>																	
-																	</c:when>
-																	<c:otherwise>
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
-																		<td width="120px">优惠兑换积分：</td>
-																		<td width="200px">
-																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
-																		</td>
-																	</c:otherwise>
-																</c:choose>
-															</tr>			
-														</c:otherwise>
-													</c:choose>										
-												</c:forEach>
-											</c:if>
-											<c:if test="${fn:length(saleforms) == 1 }">
-												<c:forEach items="${saleforms }" var="saleform">
-													<c:choose>
-														<c:when test="${saleform.unitId =='0' }">
-															<tr>
-																<td width="20px"><input type="checkbox" name="rmb" id="rmb" checked="checked" onclick="checkCheckbox(this, 'rmbPrice')" /></td>
-																<td width="80px">正常售卖：</td>
-																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-																</td>
-																<c:choose>
-																	<c:when test="${ ! empty saleform.preferentialPrice }">
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" checked="checked" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
-																		<td width="120px">优惠价格：</td>
-																		<td width="200px">
-																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
-																		</td>																	
-																	</c:when>
-																	<c:otherwise>
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
-																		<td width="120px">优惠价格：</td>
-																		<td width="200px">
-																				<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
-																		</td>
-																	</c:otherwise>
-																</c:choose>
-															</tr>
-															<tr>
-																<td width="20px"><input type="checkbox" name="binke" id="binke" onclick="checkCheckbox(this,'binkePrice')"/></td>
-																<td width="80px">积分兑换：</td>
-																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-																</td>
-																<td width="20px"></td>
-																<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
-																<td width="120px">优惠兑换积分：</td>
-																<td width="200px">
-																		<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
-																</td>
-															</tr>
-														</c:when>
-														<c:otherwise>
-															<tr>
-																<td width="20px"><input type="checkbox" name="rmb" id="rmb" onclick="checkCheckbox(this, 'rmbPrice')"/></td>
-																<td width="80px">正常售卖：</td>
-																<td width="200px">
-																		<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-																</td>
-																<td width="20px"></td>
-																<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
-																<td width="120px">优惠价格：</td>
-																<td width="200px">
-																		<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
-																</td>
-															</tr>
-															<tr>
-																<td width="20px"><input type="checkbox" name="binke" id="binke" checked="checked" onclick="checkCheckbox(this, 'binkePrice')"/></td>
-																<td width="80px">积分兑换：</td>
-																<td width="200px">
-																		<input id="binkePrice" name="binkePrice" value="${saleform.price }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-																</td>
-																<c:choose>
-																	<c:when test="${ ! empty saleform.preferentialPrice }">
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" checked="checked" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
-																		<td width="120px">优惠兑换积分：</td>
-																		<td width="200px">
-																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" value="${ saleform.preferentialPrice }" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
-																		</td>																	
-																	</c:when>
-																	<c:otherwise>
-																		<td width="20px"></td>
-																		<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
-																		<td width="120px">优惠兑换积分：</td>
-																		<td width="200px">
-																				<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
-																		</td>
-																	</c:otherwise>
-																</c:choose>
-															</tr>
-														</c:otherwise>
-													</c:choose>
-												</c:forEach>
-											</c:if>
-										</table>
-									</c:when>
-									<c:otherwise>
-										<table border="0">
-											<tr>
-												<td width="20px"><input type="checkbox" name="rmb" id="rmb" onclick="checkCheckbox(this, 'rmbPrice')"/></td>
-												<td width="80px">正常售卖：</td>
-												<td width="200px">
-														<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
-												</td>
-												<td width="20px"></td>
-												<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
-												<td width="120px">优惠价格：</td>
-												<td width="200px">
-														<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
-												</td>
-											</tr>
-											<tr>
-												<td width="20px"><input type="checkbox" name="binke" id="binke" onclick="checkCheckbox(this,'binkePrice')"/></td>
-												<td width="80px">积分兑换：</td>
-												<td width="200px">
-														<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
-												</td>
-												<td width="20px"></td>
-												<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
-												<td width="120px">优惠兑换积分：</td>
-												<td width="200px">
-														<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
-												</td>
-											</tr>
-										</table>		
-									</c:otherwise>
-								</c:choose>
-								
+								<table border="0">
+									<tr>
+										<td width="20px"><input type="checkbox" name="rmb" id="rmb" onclick="checkCheckbox(this, 'rmbPrice')"/></td>
+										<td width="80px">正常售卖：</td>
+										<td width="200px">
+												<input id="rmbPrice" name="rmbPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元<input type="hidden" name="rmbUnitId" value="0"> 
+										</td>
+										<td width="20px"></td>
+										<td width="20px"><input type="checkbox" name="rmbPreferential" id="rmbPreferential" onclick="checkCheckbox(this,'rmbPreferentialPrice')" /></td>
+										<td width="120px">优惠价格：</td>
+										<td width="200px">
+												<input id="rmbPreferentialPrice" name="rmbPreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;元 
+										</td>
+									</tr>
+									<tr>
+										<td width="20px"><input type="checkbox" name="binke" id="binke" onclick="checkCheckbox(this,'binkePrice')"/></td>
+										<td width="80px">积分兑换：</td>
+										<td width="200px">
+												<input id="binkePrice" name="binkePrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻<input type="hidden" name="binkeUnitId" value="1"> 
+										</td>
+										<td width="20px"></td>
+										<td width="20px"><input type="checkbox" name="binkePreferential" id="binkePreferential" onclick="checkCheckbox(this,'binkePreferentialPrice')" /></td>
+										<td width="120px">优惠兑换积分：</td>
+										<td width="200px">
+												<input id="binkePreferentialPrice" name="binkePreferentialPrice" type="text" style="width:150px" class="easyui-numberbox" data-options="min:0.01,precision:2" maxlength="10">&nbsp;缤刻
+										</td>
+									</tr>
+								</table>
 							</fieldset>
 						</td>
 					</tr>

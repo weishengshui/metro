@@ -73,5 +73,13 @@ public interface ICategoryService {
 	 * @return
 	 */
 	boolean hasMerchandiseCatagoryById(String id);
+	
+	/**
+	 * 根据id查询商品类别
+	 * 
+	 * @param id
+	 * @return
+	 */
+	Category findCategoryById(String id);
 
 }

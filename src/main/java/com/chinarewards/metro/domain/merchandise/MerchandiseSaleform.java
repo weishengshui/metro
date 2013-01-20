@@ -1,5 +1,6 @@
 package com.chinarewards.metro.domain.merchandise;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -17,8 +18,13 @@ import org.hibernate.annotations.GenericGenerator;
  *
  */
 @Entity
-public class MerchandiseSaleform {
+public class MerchandiseSaleform implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7030456151709225887L;
+
 	@Id
 	@GeneratedValue(generator = "system-uuid")
 	@GenericGenerator(name = "system-uuid", strategy = "uuid")
@@ -57,7 +63,7 @@ public class MerchandiseSaleform {
 		this.id = id;
 	}
 	
-	@JsonBackReference("Merchandise-MerchandiseSaleform")
+	@JsonBackReference
 	public Merchandise getMerchandise() {
 		return merchandise;
 	}

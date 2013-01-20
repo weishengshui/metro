@@ -36,9 +36,7 @@
 			merNames[i] = 'merName' + index;
 			merModels[i] = 'merModel' + index;
 			sorts[i] = 'merSort' + index;
-			
 		}
-		
 	});
 	
 	function formatterdate(val, row) {
@@ -77,9 +75,9 @@
 		var row = $('#tt').datagrid('getSelected');
 		if(row){
 			$('#catalogId').val(row.id);
-			$('#merchaniseCode').html(row.merchandise.code);
-			$('#merchaniseName').html(row.merchandise.name);
-			$('#merchaniseModel').html(row.merchandise.model);
+			$('#merchaniseCode').html(row.code);
+			$('#merchaniseName').html(row.name);
+			$('#merchaniseModel').html(row.model);
 			$('#merchaniseStatus').val(row.status);
 			$('#displaySort').numberbox('setValue',row.displaySort);
 			$('#dd').dialog('center');	
@@ -100,10 +98,15 @@
 				ids +='id='+rows[i].id+'&';
 			}
 			ids = ids.substring(0, ids.length -1);
+			if(!confirm('确认删除?')){
+				return;
+			}
 			$.ajax({
 				url:'removeCataFromCategory',
 				data:ids,
 				success: function(result){
+					result = eval('('+result+')');
+					alert(result.msg);
 					$('#tt').datagrid('reload');
 				}
 			});
@@ -137,6 +140,11 @@
 				return $(this).form('validate');
 			},
 			success: function(result){
+				result = eval('('+result+')');
+				if(result.categoryId){
+					alert(result.msg);
+					return;
+				}
 				$('#tt').datagrid('reload');
 				$('#dd').dialog('close');				
 			}
@@ -330,13 +338,11 @@
 					       					<thead>  
 					           				<tr>  
 					           				<th field="id" checkbox="true"></th> 
-					                		<th data-options="field:'1',formatter:function(v,o,i){return o.merchandise.code}">商品编号</th>
-					                		<th data-options="field:'2',formatter:function(v,o,i){return o.merchandise.name}" >商品名称</th>
-					                		<th data-options="field:'3',formatter:function(v,o,i){return o.merchandise.model}" >型号</th>
-<!-- 					                		<th data-options="field:'unitId',formatter:function(v,o,i){if(v=='0'){return '正常售卖';}else{return '积分兑换';}}">售卖形式</th> -->
-<!-- 					                		<th field="price">售价</th> -->
-<!-- 					                		<th data-options="field:'5',formatter:function(v,o,i){return o.merchandise.purchasePrice}">采购价</th> -->
-					                		<th data-options="field:'5',formatter:function(v,r,i){return upAndDown(v, r, i);}">上下架</th>
+					                		<th data-options="field:'code'">商品编号</th>
+					                		<th data-options="field:'name'" >商品名称</th>
+					                		<th data-options="field:'model'" >型号</th>
+					                		<th data-options="field:'status',formatter:function(v,r,i){return upAndDown(v, r, i);}">上下架</th>
+					                		<th data-options="field:'displaySort'">显示排序</th>
 								           	</tr>  
 									       	</thead>  
 								   		</table>

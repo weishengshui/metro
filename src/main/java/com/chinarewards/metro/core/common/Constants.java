@@ -14,7 +14,12 @@ public abstract class Constants {
 	/**
 	 * 商品类别根节点
 	 */
-	public static final String MERCHANDISE_CATAGORY_ROOT = "0";
+	public static final String CATEGORY_ROOT_ID = "0";
+	
+	/**
+	 * 商品类别根节点名称
+	 */
+	public static String MERCHANDISE_CATEGORY_ROOT = "根节点";
 
 	public static final String UPLOAD_TEMP_UID_PREFIX = "tmp@";
 

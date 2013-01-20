@@ -22,6 +22,7 @@ import com.chinarewards.metro.domain.activity.ActivityInfo;
 import com.chinarewards.metro.domain.activity.BrandActivity;
 import com.chinarewards.metro.domain.activity.BrandMode;
 import com.chinarewards.metro.domain.brand.Brand;
+import com.chinarewards.metro.domain.file.FileItem;
 import com.chinarewards.metro.domain.pos.PosBind;
 import com.chinarewards.metro.domain.shop.DiscountNumber;
 import com.chinarewards.metro.service.activity.IActivityService;
@@ -34,27 +35,55 @@ public class ActivityServiceImpl implements IActivityService {
 
 	@Override
 	public ActivityInfo saveActivity(ActivityInfo activity) {
+		FileItem image = activity.getImage();
+		if(null != image){
+			hbDaoSupport.save(image);
+		}
 		activity = hbDaoSupport.save(activity);
 		return activity;
 	}
 
 	@Override
 	public void updateActivity(ActivityInfo activity) {
-
-		String hql = "update ActivityInfo set activityName = ? ,startDate = ?,endDate = ?,description = ?,hoster = ?,activityNet = ?,contacts = ?,conTel = ?,picture = ? where id = ?";
+		FileItem image = activity.getImage();
+		if(null != image){
+			if(StringUtils.isEmpty(image.getId())){
+				hbDaoSupport.save(image);
+			}
+		}
+		hbDaoSupport.update(activity);
+		/*String hql = "update ActivityInfo set activityName = ? ,startDate = ?,endDate = ?,description = ?,hoster = ?,activityNet = ?,contacts = ?,conTel = ?,image = ? where id = ?";
 		hbDaoSupport.executeHQL(hql, activity.getActivityName(),
 				activity.getStartDate(), activity.getEndDate(),
 				activity.getDescription(), activity.getHoster(),
 				activity.getActivityNet(), activity.getContacts(),
-				activity.getConTel(), activity.getPicture(), activity.getId());
+				activity.getConTel(), activity.getImage(), activity.getId());*/
 	}
 
 	@Override
 	public List<ActivityInfo> findActivity(String activityName,String startDate,String endDate, Page page) {
 		try {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			StringBuffer hql = new StringBuffer();
+			hql.append("SELECT a FROM ActivityInfo a WHERE 1=1 ");
+			Map<String, Object> params = new HashMap<String, Object>();
+			if(StringUtils.isNotEmpty(activityName)){
+				hql.append(" AND a.activityName LIKE :activityName");
+				params.put("activityName", activityName);
+			}
 			
-			DetachedCriteria criteria = DetachedCriteria.forClass(ActivityInfo.class);
+			if (StringUtils.isNotEmpty(startDate)) {
+				hql.append(" AND a.startDate >= :startDate");
+				params.put("startDate", sdf.parse(startDate));
+			}
+			if (StringUtils.isNotEmpty(endDate)) {
+				hql.append(" AND a.endDate <= :endDate");
+				params.put("endDate", sdf.parse(endDate));
+			}
+			hql.append(" AND a.tag != :tag");
+			params.put("tag", -1);
+			List<ActivityInfo> list = hbDaoSupport.executeQuery(hql.toString(), params, page);
+			/*DetachedCriteria criteria = DetachedCriteria.forClass(ActivityInfo.class);
 			if (StringUtils.isNotEmpty(activityName)) {
 				criteria.add(Restrictions.like("activityName", activityName,MatchMode.ANYWHERE));
 			}
@@ -67,7 +96,8 @@ public class ActivityServiceImpl implements IActivityService {
 				criteria.add(Restrictions.between("endDate", sdf.parse(endDate), sdf.parse(endDate)));
 			}
 			criteria.add(Restrictions.not(Expression.eq("tag",-1)));
-			return hbDaoSupport.findPageByCriteria(page, criteria);
+			List<ActivityInfo> list = hbDaoSupport.findPageByCriteria(page, criteria);*/
+			return list;
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

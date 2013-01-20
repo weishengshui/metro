@@ -7,6 +7,9 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
+
+import com.chinarewards.metro.domain.file.FileItem;
 
 @Entity
 public class ActivityInfo {
@@ -25,7 +28,9 @@ public class ActivityInfo {
 	private String activityNet ;
 	private String contacts ;
 	private String conTel ;
-	private String picture ;
+	@OneToOne
+	private FileItem image;
+//	private String picture ;
 	//1:默认，0：取消，-1：逻辑删除
 	private int tag ;
 	
@@ -83,18 +88,25 @@ public class ActivityInfo {
 	public void setConTel(String conTel) {
 		this.conTel = conTel;
 	}
-	public String getPicture() {
-		return picture;
-	}
-	public void setPicture(String picture) {
-		this.picture = picture;
-	}
+//	public String getPicture() {
+//		return picture;
+//	}
+//	public void setPicture(String picture) {
+//		this.picture = picture;
+//	}
 	public int getTag() {
 		return tag;
 	}
 	public void setTag(int tag) {
 		this.tag = tag;
 	}
+	public FileItem getImage() {
+		return image;
+	}
+	public void setImage(FileItem image) {
+		this.image = image;
+	}
+	
 	
 	
 }

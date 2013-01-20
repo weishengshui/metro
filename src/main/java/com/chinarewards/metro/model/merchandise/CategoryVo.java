@@ -21,6 +21,7 @@ public class CategoryVo {
 	private Date on_offTime;
 	private Long displaySort;
 	private String fullName;// 类别全名
+	private String catalogId;
 
 	public CategoryVo() {
 	}
@@ -48,13 +49,14 @@ public class CategoryVo {
 		this.displaySort = displaySort;
 	}
 
-	public CategoryVo(MerchandiseCatalog catalog){
+	public CategoryVo(MerchandiseCatalog catalog) {
 		Category category = catalog.getCategory();
-		
+		this.category = category;
 		this.categoryId = category.getId();
 		this.status = catalog.getStatus();
 		this.displaySort = catalog.getDisplaySort();
 		this.on_offTime = catalog.getOn_offTIme();
+		this.catalogId = catalog.getId();
 	}
 
 	public String getCategoryId() {
@@ -119,6 +121,14 @@ public class CategoryVo {
 
 	public void setMerchandiseId(String merchandiseId) {
 		this.merchandiseId = merchandiseId;
+	}
+
+	public String getCatalogId() {
+		return catalogId;
+	}
+
+	public void setCatalogId(String catalogId) {
+		this.catalogId = catalogId;
 	}
 
 }
